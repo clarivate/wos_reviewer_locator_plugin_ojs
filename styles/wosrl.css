@@ -1,0 +1,211 @@
+/**
+ * plugins/generic/wosReviewerLocator/styles/wosrl.css
+ *
+ * Copyright (c) 2025 Clarivate
+ * Distributed under the GNU GPL v3.
+ *
+ * wosReviewerLocator styling
+ *
+ */
+
+#wosRLHeader h4 {
+    padding-right: 25px;
+    background: url('../templates/image/clarivate-logo-color-font.ico') no-repeat right center;
+}
+
+#wosRLGrid .wosrl-placeholder {
+    padding: .5rem 1rem;
+    color: rgba(0, 0, 0, .54);
+}
+#wosRLGrid .wosrl-loader {
+    padding: .5rem 1rem;
+}
+
+#wosRLGrid a {
+    color: #5e33bf;
+}
+
+#wosRLToolbar {
+    padding: 0;
+    font-weight: 300;
+    line-height: 1rem;
+}
+#wosRLToolbar h3 {
+    margin: 0;
+    padding: 0;
+    font-weight: 300;
+}
+#wosRLToolbar #wosRLItems span {
+    font-weight: 300;
+}
+#wosRLToolbar #wosRLItems select {
+    display: inline;
+    width: auto;
+    height: auto;
+    padding: .1rem .25rem;
+}
+#wosRLToolbar #wosRLPagination > a,
+#wosRLToolbar #wosRLPagination > svg {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-left: 20px;
+    padding: 0;
+    vertical-align: middle;
+}
+#wosRLToolbar #wosRLPagination > a {
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+#wosRLToolbar #wosRLPagination > a:hover:active:focus {
+    border: none;
+    outline: none;
+}
+#wosRLToolbar #wosRLPagination > svg > path {
+    fill: #e0e0e0;
+}
+
+#wosRLList span {
+    display: block;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 16px;
+    color: #000000de;
+}
+#wosRLList > table > tbody > tr > td {
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    border-top: 1px solid #eee;
+}
+#wosRLList .wosrl-title {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+}
+#wosRLList .wosrl-subtitle {
+    margin-bottom: 10px;
+    line-height: 100%;
+    color: #0000008a;
+}
+#wosRLList .wosrl-card {
+    padding-top: 10px;
+}
+#wosRLList .wosrl-card span {
+    margin-bottom: 5px;
+}
+#wosRLList .wosrl-card a {
+    text-decoration: none;
+}
+#wosRLList .wosrl-card a:hover {
+    text-decoration: underline;
+}
+#wosRLList .wosrl-card .wosrl-profile {
+    padding-left: 20px;
+    background: url('../templates/image/clarivate-logo-color-font.ico') no-repeat left center;
+}
+#wosRLList .wosrl-card .wosrl-orcid {
+    padding-left: 20px;
+    background: url('../templates/image/orcid.svg') no-repeat left center;
+    background-size: 15px;
+}
+#wosRLList .wosrl-actions {
+    padding-top: .5rem;
+}
+#wosRLList .wosrl-actions button {
+    padding: 0 1rem;
+    color: #de2839;
+}
+#wosRLList .wosrl-actions button b {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.25rem;
+    line-height: 1rem;
+    color: #ffffff;
+    background: #de2839;
+    border-radius: 50%;
+    vertical-align: baseline;
+}
+
+#wosRLList .wosrl-publications {
+    margin-bottom: 1rem;
+}
+#wosRLList .wosrl-publications th,
+#wosRLList .wosrl-details th {
+    width: auto;
+    height: 23px;
+    font-size: .875rem;
+    font-weight: 300;
+    line-height: 1.15rem;
+    text-align: left;
+    vertical-align: bottom;
+}
+#wosRLList .wosrl-publications td,
+#wosRLList .wosrl-details td {
+    padding-bottom: 0;
+    font-weight: 300;
+    font-size: .75rem;
+    line-height: 1rem;
+}
+#wosRLList .wosrl-publications a {
+    display: inline;
+    padding: 0;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    text-decoration: none;
+    border: none;
+}
+#wosRLList .wosrl-publications a:hover {
+    text-decoration: underline;
+    border: none;
+}
+#wosRLList .wosrl-publications th:last-child {
+    text-align: right;
+}
+#wosRLList .wosrl-details th {
+    height: auto;
+    padding-top: 0;
+}
+#wosRLList .wosrl-details th:first-child {
+    width: 45%;
+}
+#wosRLList .wosrl-details th:last-child {
+    text-align: right;
+}
+#wosRLList .wosrl-details .wosrl-bl {
+    border-left: 2px solid #D2C4ED;
+}
+#wosRLList .wosrl-conflict {
+    display: none;
+}
+#wosRLList .wosrl-conflict td {
+    border-top: none;
+}
+#wosRLList .wosrl-conflict .wosrl-pt05 {
+    padding-top: .5rem;
+}
+#wosRLList .wosrl-conflict p {
+    margin-top: 0;
+    margin-bottom: .25rem;
+    font-size: .75rem;
+    font-weight: 300;
+    line-height: 1rem;
+}
+#wosRLList .wosrl-conflict p.wosrl-section {
+    font-size: .875rem;
+    line-height: 1.15rem;
+}
+#wosRLList .wosrl-conflict a {
+    display: inline;
+    padding: 0;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    text-decoration: none;
+    border: none;
+}
+#wosRLList .wosrl-conflict a:hover {
+    text-decoration: underline;
+    border: none;
+}

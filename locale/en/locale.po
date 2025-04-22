@@ -1,0 +1,99 @@
+msgid "plugins.generic.wosrl.display_name"
+msgstr "Web of Science - Reviewer Locator Plugin"
+
+msgid "plugins.generic.wosrl.description"
+msgstr "This plugin allows you to obtain reviewer suggestions."
+
+msgid "plugins.generic.wosrl.settings.connection"
+msgstr "Connection"
+
+msgid "plugins.generic.wosrl.notifications.settings_updated"
+msgstr "Settings updated"
+
+msgid "plugins.generic.wosrl.settings.info"
+msgstr ""
+"<p><a href=\"mailto:reviewservices@clarivate.com\">Email us</a> to start using the plugin. We'll provide you the API key needed to complete the next steps.</p>"
+"<p>To enable the plugin fill in the fields below</p>"
+
+msgid "plugins.generic.wosrl.settings.api_key"
+msgstr "API Key"
+
+msgid "plugins.generic.wosrl.settings.api_key_description"
+msgstr "The API key for your account."
+
+msgid "plugins.generic.wosrl.settings.api_key_required"
+msgstr "Please ensure that your API key is correct."
+
+msgid "plugins.generic.wosrl.settings.nor"
+msgstr "Number of recommendations"
+
+msgid "plugins.generic.wosrl.settings.nor_description"
+msgstr "The number of recommendations in the list."
+
+msgid "plugins.generic.wosrl.settings.nor_required"
+msgstr "Please enter the desired number of recommendations."
+
+msgid "plugins.generic.wosrl.settings.ps"
+msgstr ""
+"<p>Once you have enabled the plugin, reviewers will have the option to get recommendations for their review on the review submission page.</p>"
+
+msgid "plugins.generic.wosrl.grid.title"
+msgstr "Web of Science &trade; Reviewer Locator"
+
+msgid "plugins.generic.wosrl.grid.search"
+msgstr "Search"
+
+msgid "plugins.generic.wosrl.toolbar.title"
+msgstr "Recommended Reviewers"
+
+msgid "plugins.generic.wosrl.toolbar.items"
+msgstr "Items per page"
+
+msgid "plugins.generic.wosrl.list.placeholder"
+msgstr "Default placeholder..."
+
+msgid "plugins.generic.wosrl.list.empty"
+msgstr "No reviewers found..."
+
+msgid "plugins.generic.wosrl.list.article_count"
+msgstr "{$total} articles"
+
+msgid "plugins.generic.wosrl.list.review_count"
+msgstr "{$total} reviews"
+
+msgid "plugins.generic.wosrl.list.profile"
+msgstr "Web of Science Researcher Profile"
+
+msgid "plugins.generic.wosrl.list.conflict_view"
+msgstr "View conflicts of interest"
+
+msgid "plugins.generic.wosrl.list.conflict_hide"
+msgstr "Hide conficts of interest"
+
+msgid "plugins.generic.wosrl.list.conflict_affiliation"
+msgstr "Potential Conflicts of Interest by Co-Affiliation"
+
+msgid "plugins.generic.wosrl.list.conflict_publication"
+msgstr "Potential Conflicts of Interest by Co-Publication"
+
+msgid "plugins.generic.wosrl.list.conflict_by"
+msgstr "By"
+
+msgid "plugins.generic.wosrl.list.relevant_publications"
+msgstr "Relevant publications"
+
+msgid "plugins.generic.wosrl.list.citations"
+msgstr "Citations"
+
+msgid "plugins.generic.wosrl.list.keywords"
+msgstr "Keywords"
+
+msgid "plugins.generic.wosrl.list.experience"
+msgstr "Peer Review Experience"
+
+msgid "plugins.generic.wosrl.list.reviews"
+msgstr "Reviews"
+
+msgid "plugins.generic.wosrl.error.general"
+msgstr "Failed request or invalid JSON returned."
+
