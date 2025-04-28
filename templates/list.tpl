@@ -65,47 +65,47 @@
                 <td>
                     <table class="wosrl-publications">
                         <tbody>
+                        <tr>
+                            <th>{translate key="plugins.generic.wosrl.list.relevant_publications"}</th>
+                            <th>{translate key="plugins.generic.wosrl.list.citations"}</th>
+                        </tr>
+                        {foreach $reviewer->relevantArticles as $article}
                             <tr>
-                                <th>{translate key="plugins.generic.wosrl.list.relevant_publications"}</th>
-                                <th>{translate key="plugins.generic.wosrl.list.citations"}</th>
+                                <td>
+                                    <a href="https://www.webofscience.com/wos/woscc/full-record/{$article->ut}" target="_blank">"{$article->title}"</a>
+                                    ({$article->publicationYear}) {$article->journal->name}
+                                </td>
+                                <td align="right">{$article->citationCount}</td>
                             </tr>
-                            {foreach $reviewer->relevantArticles as $article}
-                                <tr>
-                                    <td>
-                                        <a href="https://www.webofscience.com/wos/woscc/full-record/{$article->ut}" target="_blank">"{$article->title}"</a>
-                                        ({$article->publicationYear}) {$article->journal->name}
-                                    </td>
-                                    <td align="right">{$article->citationCount}</td>
-                                </tr>
-                            {/foreach}
+                        {/foreach}
                         </tbody>
                     </table>
                     <table class="wosrl-details">
                         <tbody>
-                            <tr>
-                                <th width="45%">{translate key="plugins.generic.wosrl.list.keywords"}</th>
-                                <th class="wosrl-bl">{translate key="plugins.generic.wosrl.list.experience"}</th>
-                                <th align="right">{translate key="plugins.generic.wosrl.list.reviews"}</th>
-                            </tr>
-                            <tr>
-                                <td>
-                                    {foreach $reviewer->keywords as $keyword}
-                                        {$keyword->name}{if $keyword@last}{else},{/if}
+                        <tr>
+                            <th width="45%">{translate key="plugins.generic.wosrl.list.keywords"}</th>
+                            <th class="wosrl-bl">{translate key="plugins.generic.wosrl.list.experience"}</th>
+                            <th align="right">{translate key="plugins.generic.wosrl.list.reviews"}</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                {foreach $reviewer->keywords as $keyword}
+                                    {$keyword->name}{if $keyword@last}{else},{/if}
+                                {/foreach}
+                            </td>
+                            <td class="wosrl-bl" colspan="2" style="padding: 0;">
+                                <table>
+                                    <tbody>
+                                    {foreach $reviewer->reviewerExperience|array_slice:0:3 as $experience}
+                                        <tr>
+                                            <td>{$experience->journal->name}</td>
+                                            <td align="right">{$experience->numVerifiedReviews}</td>
+                                        </tr>
                                     {/foreach}
-                                </td>
-                                <td class="wosrl-bl" colspan="2" style="padding: 0;">
-                                    <table>
-                                        <tbody>
-                                        {foreach $reviewer->reviewerExperience|array_slice:0:3 as $experience}
-                                            <tr>
-                                                <td>{$experience->journal->name}</td>
-                                                <td align="right">{$experience->numVerifiedReviews}</td>
-                                            </tr>
-                                        {/foreach}
-                                        </tbody>
-                                    </table>
-                                </td>
-                            </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </td>

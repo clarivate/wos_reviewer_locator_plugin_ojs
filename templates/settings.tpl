@@ -10,7 +10,7 @@
 <script>
     $(function() {ldelim}
         $('#wosRLForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
-    {rdelim});
+        {rdelim});
 </script>
 
 <div>

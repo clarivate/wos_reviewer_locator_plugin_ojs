@@ -132,9 +132,8 @@ class wosRLHandler extends Handler
             }
         } else {
             try {
-                $response = $httpClient->request('GET', $url . '/' . $token->token, [
-                    'headers' => $headers,
-                    'connect_timeout' => 5
+                $response = $httpClient->request('GET', $url . '/' . $token->token . '/', [
+                    'headers' => $headers
                 ]);
                 $body = json_decode($response->getBody());
                 $reviewers = $body->recommendedReviewers;
