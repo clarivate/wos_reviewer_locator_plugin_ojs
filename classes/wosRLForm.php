@@ -22,7 +22,7 @@ use PKP\form\validation\FormValidator;
 use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
 use PKP\notification\PKPNotification;
-use APP\plugins\generic\wosReviewerLocator\wosReviewerLocatorPlugin;
+use APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin;
 
 class wosRLForm extends Form {
 
@@ -35,7 +35,7 @@ class wosRLForm extends Form {
     /**
      * Constructor
      *
-     * @param $plugin wosReviewerLocatorPlugin
+     * @param $plugin WosReviewerLocatorPlugin
      * @param $journalId int
      * @see Form::Form()
      */

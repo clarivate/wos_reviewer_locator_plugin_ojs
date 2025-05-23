@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @file wosReviewerLocatorPlugin.php
+ * @file WosReviewerLocatorPlugin.php
  *
- * @class wosReviewerLocatorPlugin
+ * @class WosReviewerLocatorPlugin
  */
 
 namespace APP\plugins\generic\wosReviewerLocator;
@@ -22,7 +22,7 @@ use APP\plugins\generic\wosReviewerLocator\classes\wosRLForm;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLMigration;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLDAO;
 
-class wosReviewerLocatorPlugin extends GenericPlugin {
+class WosReviewerLocatorPlugin extends GenericPlugin {
 
     /**
      * @copydoc Plugin::register()
@@ -168,7 +168,7 @@ class wosReviewerLocatorPlugin extends GenericPlugin {
      */
     function handleTemplateFetch($hookName, $args): bool
     {
-        if ($this->getEnabled() && $args[1] == 'controllers/grid/gridBodyPart.tpl') {
+        if ($this->getEnabled() && $args[1] == 'controllers/grid/grid.tpl') {
             $args[0]->registerFilter('output', [$this, 'reviewPageFilter']);
         }
         return false;
@@ -181,7 +181,7 @@ class wosReviewerLocatorPlugin extends GenericPlugin {
         $journalId = $request->getContext()->getId();
         $api_key = $plugin->getSetting($journalId, 'api_key');
         $exp = explode('/', $request->getRequestPath());
-        preg_match_all('/class="pkp_controllers_linkAction pkp_linkaction_addReviewer pkp_linkaction_icon_add_user"/s', $output, $matches);
+        preg_match('/pkp_linkaction_addReviewer/s', $output, $matches);
         if($api_key && in_array('reviewer-grid', $exp) && $matches && $matches[0]) {
             $args = $request->getQueryArray();
             $page_url = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, ['submissionId' => $args['submissionId']]);
@@ -201,7 +201,7 @@ class wosReviewerLocatorPlugin extends GenericPlugin {
 
 }
 
-if ( ! PKP_STRICT_MODE) {
-    class_alias('\APP\plugins\generic\wosReviewerLocator\wosReviewerLocatorPlugin', '\wosReviewerLocatorPlugin');
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin', '\WosReviewerLocatorPlugin');
 }
 

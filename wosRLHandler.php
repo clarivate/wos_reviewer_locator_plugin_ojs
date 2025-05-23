@@ -29,8 +29,8 @@ use APP\plugins\generic\wosReviewerLocator\classes\wosRLDAO;
 class wosRLHandler extends Handler
 {
 
-    /** @var wosReviewerLocatorPlugin The Web of Science - Reviewer Locator plugin */
-    static wosReviewerLocatorPlugin $plugin;
+    /** @var WosReviewerLocatorPlugin The Web of Science - Reviewer Locator plugin */
+    static WosReviewerLocatorPlugin $plugin;
 
     /**
      * Constructor
