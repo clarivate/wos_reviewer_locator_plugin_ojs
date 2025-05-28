@@ -10,6 +10,11 @@
 <div id="wosRLToolbar">
     <table>
         <tbody>
+        <tr class="info">
+            <td colspan="3">
+                <a href="https://reviewerlocator.webofscience.com/{$token}" target="_blank">{translate key="plugins.generic.wosrl.toolbar.link"}</a>
+            </td>
+        </tr>
         <tr>
             <td>
                 <h3>{translate key="plugins.generic.wosrl.toolbar.title"}</h3>

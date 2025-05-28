@@ -30,6 +30,18 @@
     font-weight: 300;
     line-height: 1rem;
 }
+#wosRLToolbar .info td {
+    padding-top: .1rem;
+    padding-bottom: .2rem;
+    border-bottom: 1px solid #eee;
+}
+#wosRLToolbar .info td a {
+    display: inline;
+    padding: 0;
+    font-size: .75rem;
+    line-height: 1rem;
+    font-weight: 600;
+}
 #wosRLToolbar h3 {
     margin: 0;
     padding: 0;

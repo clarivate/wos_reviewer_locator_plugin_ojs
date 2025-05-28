@@ -126,6 +126,7 @@ class wosRLHandler extends Handler
                     'token' => $body->searchToken
                 ]);
                 $reviewers = $body->recommendedReviewers;
+                $templateManager->assign('token', $body->searchToken);
                 $templateManager->assign('status', $response->getStatusCode());
             } catch (\Exception $e) {
                 return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
@@ -137,6 +138,7 @@ class wosRLHandler extends Handler
                 ]);
                 $body = json_decode($response->getBody());
                 $reviewers = $body->recommendedReviewers;
+                $templateManager->assign('token', $token->token);
                 $templateManager->assign('status', $response->getStatusCode());
             } catch (\Exception $e) {
                 // Temporary delete token...

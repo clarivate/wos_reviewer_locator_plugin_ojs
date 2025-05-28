@@ -43,6 +43,9 @@ msgstr "Web of Science &trade; Reviewer Locator"
 msgid "plugins.generic.wosrl.grid.search"
 msgstr "Search"
 
+msgid "plugins.generic.wosrl.toolbar.link"
+msgstr "View full interactive search on reviewerlocator.webofscience.com"
+
 msgid "plugins.generic.wosrl.toolbar.title"
 msgstr "Recommended Reviewers"
 
