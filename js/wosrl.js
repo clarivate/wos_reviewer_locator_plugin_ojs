@@ -10,7 +10,7 @@
 
 function wosRLList(page_url) {
     const wrapper = $('#wosRLGrid');
-    $('ul.actions', wrapper.parent()).addClass('pkp_helpers_display_none');
+    $('a#wosRLSearch', wrapper.parent()).addClass('wosrl-hidden');
     wrapper.html('<div class="wosrl-loader"><span class="pkp_spinner"></span></div>');
     $.ajax({
         url: page_url,
@@ -22,12 +22,12 @@ function wosRLList(page_url) {
                     wosRLPagination();
                 }
             } else {
-                $('ul.actions', wrapper.parent()).removeClass('pkp_helpers_display_none');
+                $('a#wosRLSearch', wrapper.parent()).removeClass('wosrl-hidden');
                 wrapper.html('<div class="wosrl-placeholder">' + data.content + '</div>');
             }
         },
         error: function() {
-            $('ul.actions', wrapper.parent()).removeClass('pkp_helpers_display_none');
+            $('a#wosRLSearch', wrapper.parent()).removeClass('wosrl-hidden');
             wrapper.html('<div class="wosrl-placeholder">Failed request or invalid JSON returned.</div>');
         }
     });

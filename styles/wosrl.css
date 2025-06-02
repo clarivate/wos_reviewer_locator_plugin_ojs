@@ -10,9 +10,29 @@
 
 #wosRLHeader h4 {
     padding-right: 25px;
+    border-bottom: none;
     background: url('../templates/image/clarivate-logo-color-font.ico') no-repeat right center;
 }
+#wosRLHeader ul.actions a.wosrl-toggle {
+    cursor: pointer;
+    width: 0;
+    height: 0;
+    margin-left: .5rem;
+    border-left: .4rem solid transparent;
+    border-right: .4rem solid transparent;
+    border-top: .5rem solid #006798;
+    font-size: 0;
+    line-height: 0;
+    box-shadow: none;
+}
+#wosRLHeader ul.actions a.wosrl-toggle.closed {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+}
 
+#wosRLGrid {
+    border-top: 1px solid #eee;
+}
 #wosRLGrid .wosrl-placeholder {
     padding: .5rem 1rem;
     color: rgba(0, 0, 0, .54);
@@ -220,4 +240,8 @@
 #wosRLList .wosrl-conflict a:hover {
     text-decoration: underline;
     border: none;
+}
+
+.wosrl-hidden {
+    display: none !important;
 }
