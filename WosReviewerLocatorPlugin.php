@@ -184,7 +184,10 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         preg_match('/pkp_linkaction_addReviewer/s', $output, $matches);
         if($api_key && in_array('reviewer-grid', $exp) && $matches && $matches[0]) {
             $args = $request->getQueryArray();
-            $page_url = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, ['submissionId' => $args['submissionId']]);
+            $page_url = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, [
+                'submissionId' => $args['submissionId'],
+                'stageId' => $args['stageId']
+            ]);
             $templateManager->assign('page_url', $page_url);
             $wosRLDao = new wosRLDAO();
             $token = $wosRLDao->getToken($args['submissionId']);

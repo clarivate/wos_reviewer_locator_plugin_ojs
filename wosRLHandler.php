@@ -19,6 +19,7 @@ use APP\core\Request;
 use APP\facades\Repo;
 use APP\template\TemplateManager;
 
+use PKP\db\DAORegistry;
 use PKP\core\JSONMessage;
 use PKP\facades\Locale;
 use PKP\security\Role;
@@ -91,7 +92,6 @@ class wosRLHandler extends Handler
             'X-ApiKey' => $plugin->getSetting($context->getId(), 'api_key'),
             'Content-Type' => 'application/json'
         ];
-        $reviewers = [];
         if( ! $token) {
             // Set post data
             $data = [
@@ -104,17 +104,48 @@ class wosRLHandler extends Handler
                     ],
                     'authors' => []
                 ],
+                'excludedReviewers' => [],
                 'searchYears' => 5,
                 'numRecommendations' => $plugin->getSetting($context->getId(), 'nor')
             ];
-            foreach($publication->getData('authors') as $author) {
-                $data_author = [
-                    'firstName' => $author->getLocalizedData('givenName'),
-                    'lastName' => $author->getLocalizedData('familyName'),
-                    'email' => $author->getLocalizedData('email'),
-                    'organizations' => []
-                ];
-                $data['searchArticle']['authors'][] = $data_author;
+            $userGroups = Repo::userGroup()->getCollector()->filterByContextIds([$context->getId()])->getMany()->toArray();
+            $userGroupsAuthorIds = array_map(function ($userGroup) {
+                return $userGroup->getId();
+            }, array_filter($userGroups, function ($userGroup) {
+                return in_array($userGroup->getRoleId(), [Role::ROLE_ID_AUTHOR]);
+            }));
+            $userGroupsEditorIds = array_map(function ($userGroup) {
+                return $userGroup->getId();
+            }, array_filter($userGroups, function ($userGroup) {
+                return in_array($userGroup->getRoleId(), [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR]);
+            }));
+            $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+            $stageAssignmentFactory = $stageAssignmentDao->getBySubmissionAndStageId($submission_id, $args['stageId']);
+            while ($stageAssignment = $stageAssignmentFactory->next()) {
+                $userId = $stageAssignment->getUserId();
+                $user = Repo::user()->get($userId);
+                if (in_array($stageAssignment->getUserGroupId(), $userGroupsAuthorIds)) {
+                    $data_author = [
+                        'firstName' => $user->getLocalizedGivenName(),
+                        'lastName' => $user->getLocalizedFamilyName(),
+                        'email' => $user->getEmail(),
+                        'organizations' => []
+                    ];
+                    if($affiliation = $user->getLocalizedAffiliation()) {
+                        $data_author['organizations'][] = [
+                            'name' => $affiliation
+                        ];
+                    };
+                    $data['searchArticle']['authors'][] = $data_author;
+                }
+                if (in_array($stageAssignment->getUserGroupId(), $userGroupsEditorIds)) {
+                    $data_editor = [
+                        'firstName' => $user->getLocalizedGivenName(),
+                        'lastName' => $user->getLocalizedFamilyName(),
+                        'email' => $user->getEmail()
+                    ];
+                    $data['excludedReviewers'][] = $data_editor;
+                }
             }
             try {
                 $response = $httpClient->request('POST', $url, [
