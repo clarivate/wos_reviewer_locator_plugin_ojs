@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema SYSTEM "../../../../lib/pkp/dtd/xmlSchema.dtd">
+
+<!--
+ * plugins/generic/wosReviewerLocator/schema.xml
+ *
+ * Copyright (c) 2025 Clarivate
+ * Distributed under the GNU GPL v3.
+ *
+ * Web of Science Reviewer Locator plugin schema in XML.
+ *
+ -->
+
+<schema version="0.2">
+	<!--
+	 *
+	 * TABLE wosrl_submission_tokens
+	 *
+	 -->
+	<table name="wosrl_submission_tokens">
+		<field name="token_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="locale" type="C" size="5">
+			<NOTNULL/>
+			<DEFAULT VALUE=""/>
+		</field>
+		<field name="token" type="C" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="created_at" type="D">
+			<NOTNULL/>
+		</field>
+		<index name="submission_tokens_submission_id">
+			<col>submission_id</col>
+		</index>
+		<index name="wosrl_submission_tokens_pkey">
+			<col>submission_id</col>
+			<col>locale</col>
+			<col>token</col>
+			<UNIQUE />
+		</index>
+		<descr>Web of Science - Reviewer locator tokens</descr>
+	</table>
+
+</schema>
