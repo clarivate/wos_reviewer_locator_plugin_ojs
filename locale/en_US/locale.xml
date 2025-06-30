@@ -12,8 +12,8 @@
 
 <locale name="en_US" full_name="U.S. English">
 
-  <message key="plugins.generic.wosrl.display_name">Web of Science - Reviewer Locator Plugin</message>
-  <message key="plugins.generic.wosrl.description">This plugin allows you to obtain reviewer suggestions.</message>
+  <message key="plugins.generic.wosrl.display_name">Web of Science Reviewer Locator Plugin</message>
+  <message key="plugins.generic.wosrl.description">This plugin allows you to search for reviewers using Web of Science.</message>
   <message key="plugins.generic.wosrl.notifications.settings_updated">Settings updated</message>
   <message key="plugins.generic.wosrl.settings.info">
     <![CDATA[
@@ -26,11 +26,11 @@
   <message key="plugins.generic.wosrl.settings.api_key_description">The API key for your account.</message>
   <message key="plugins.generic.wosrl.settings.api_key_required">Please ensure that your API key is correct.</message>
   <message key="plugins.generic.wosrl.settings.nor">Number of recommendations</message>
-  <message key="plugins.generic.wosrl.settings.nor_description">The number of recommendations in the list.</message>
+  <message key="plugins.generic.wosrl.settings.nor_description">The number of recommended reviewers returned by search.</message>
   <message key="plugins.generic.wosrl.settings.nor_required">Please enter the desired number of recommendations.</message>
   <message key="plugins.generic.wosrl.settings.ps">
     <![CDATA[
-      <p>Once you have enabled the plugin, reviewers will have the option to get recommendations for their review on the review submission page.</p>
+      <p>Once you have enabled the plugin, editors will be able to search for reviewers using Web of Science Reviewer Locator directly from the OJS system.</p>
     ]]>
   </message>
   <message key="plugins.generic.wosrl.grid.title">Web of Science &trade; Reviewer Locator</message>
@@ -38,13 +38,13 @@
   <message key="plugins.generic.wosrl.toolbar.link">View full interactive search on reviewerlocator.webofscience.com</message>
   <message key="plugins.generic.wosrl.toolbar.title">Recommended Reviewers</message>
   <message key="plugins.generic.wosrl.toolbar.items">Items per page</message>
-  <message key="plugins.generic.wosrl.list.placeholder">Default placeholder...</message>
+  <message key="plugins.generic.wosrl.list.placeholder">Find, screen, and connect with fit-for-purpose reviewers using the Web of Science's author data, citation index, and exclusive peer review database.</message>
   <message key="plugins.generic.wosrl.list.empty">No reviewers found...</message>
   <message key="plugins.generic.wosrl.list.article_count">{$total} articles</message>
   <message key="plugins.generic.wosrl.list.review_count">{$total} reviews</message>
   <message key="plugins.generic.wosrl.list.profile">Web of Science Researcher Profile</message>
   <message key="plugins.generic.wosrl.list.conflict_view">View conflicts of interest</message>
-  <message key="plugins.generic.wosrl.list.conflict_hide">Hide conficts of interest</message>
+  <message key="plugins.generic.wosrl.list.conflict_hide">Hide conflicts of interest</message>
   <message key="plugins.generic.wosrl.list.conflict_affiliation">Potential Conflicts of Interest by Co-Affiliation</message>
   <message key="plugins.generic.wosrl.list.conflict_publication">Potential Conflicts of Interest by Co-Publication</message>
   <message key="plugins.generic.wosrl.list.conflict_by">By</message>
