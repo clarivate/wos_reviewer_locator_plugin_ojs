@@ -18,7 +18,7 @@ class WosRLHandler extends Handler
 {
 
     /** @var WosReviewerLocatorPlugin The Web of Science - Reviewer Locator plugin */
-    static WosReviewerLocatorPlugin $plugin;
+    static $plugin;
 
     /**
      * Constructor
