@@ -67,9 +67,9 @@ class WosRLHandler extends Handler
         $context = $request->getContext();
         $templateManager = TemplateManager::getManager();
         // Get submission & publication
-        $submissionDAO = DAORegistry::getDAO('ReviewerSubmissionDAO');
+        $submissionDAO = DAORegistry::getDAO('ArticleDAO');
         $submission_id = $args['submissionId'];
-        $submission = $submissionDAO->getReviewerSubmission($submission_id);
+        $submission = $submissionDAO->getById($submission_id);
         // Fetch token and check expiration
         $wosRLDao = DAORegistry::getDAO('WosRLDAO');
         $token = $wosRLDao->getToken($submission_id);
