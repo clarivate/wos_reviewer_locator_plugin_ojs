@@ -119,11 +119,6 @@ class WosRLHandler extends Handler
             // Editors
             $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
             $userGroups = $userGroupDao->getByContextId($context->getId())->toArray();
-//            $userGroupsAuthorIds = array_map(function ($userGroup) {
-//                return $userGroup->getId();
-//            }, array_filter($userGroups, function ($userGroup) {
-//                return in_array($userGroup->getRoleId(), [ROLE_ID_AUTHOR]);
-//            }));
             $userGroupsEditorIds = array_map(function ($userGroup) {
                 return $userGroup->getId();
             }, array_filter($userGroups, function ($userGroup) {
@@ -135,20 +130,6 @@ class WosRLHandler extends Handler
             while ($stageAssignment = $stageAssignmentFactory->next()) {
                 $userId = $stageAssignment->getUserId();
                 $user = $userDao->getById($userId);
-//                if (in_array($stageAssignment->getUserGroupId(), $userGroupsAuthorIds)) {
-//                    $data_author = [
-//                        'firstName' => $user->getLocalizedGivenName(),
-//                        'lastName' => $user->getLocalizedFamilyName(),
-//                        'email' => $user->getEmail(),
-//                        'organizations' => []
-//                    ];
-//                    if($affiliation = $user->getLocalizedAffiliation()) {
-//                        $data_author['organizations'][] = [
-//                            'name' => $affiliation
-//                        ];
-//                    };
-//                    $data['searchArticle']['authors'][] = $data_author;
-//                }
                 if (in_array($stageAssignment->getUserGroupId(), $userGroupsEditorIds)) {
                     $data_editor = [
                         'firstName' => $user->getLocalizedGivenName(),
