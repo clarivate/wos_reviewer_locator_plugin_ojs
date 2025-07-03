@@ -101,13 +101,29 @@ class WosRLHandler extends Handler
                 'searchYears' => 5,
                 'numRecommendations' => $plugin->getSetting($context->getId(), 'nor')
             ];
+            // Authors
+            foreach ($submission->getAuthors() as $author) {
+                $data_author = [
+                    'firstName' => $author->getLocalizedGivenName(),
+                    'lastName' => $author->getLocalizedFamilyName(),
+                    'email' => $author->getEmail(),
+                    'organizations' => []
+                ];
+                if($affiliation = $author->getLocalizedAffiliation()) {
+                    $data_author['organizations'][] = [
+                        'name' => $affiliation
+                    ];
+                };
+                $data['searchArticle']['authors'][] = $data_author;
+            }
+            // Editors
             $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
             $userGroups = $userGroupDao->getByContextId($context->getId())->toArray();
-            $userGroupsAuthorIds = array_map(function ($userGroup) {
-                return $userGroup->getId();
-            }, array_filter($userGroups, function ($userGroup) {
-                return in_array($userGroup->getRoleId(), [ROLE_ID_AUTHOR]);
-            }));
+//            $userGroupsAuthorIds = array_map(function ($userGroup) {
+//                return $userGroup->getId();
+//            }, array_filter($userGroups, function ($userGroup) {
+//                return in_array($userGroup->getRoleId(), [ROLE_ID_AUTHOR]);
+//            }));
             $userGroupsEditorIds = array_map(function ($userGroup) {
                 return $userGroup->getId();
             }, array_filter($userGroups, function ($userGroup) {
@@ -119,20 +135,20 @@ class WosRLHandler extends Handler
             while ($stageAssignment = $stageAssignmentFactory->next()) {
                 $userId = $stageAssignment->getUserId();
                 $user = $userDao->getById($userId);
-                if (in_array($stageAssignment->getUserGroupId(), $userGroupsAuthorIds)) {
-                    $data_author = [
-                        'firstName' => $user->getLocalizedGivenName(),
-                        'lastName' => $user->getLocalizedFamilyName(),
-                        'email' => $user->getEmail(),
-                        'organizations' => []
-                    ];
-                    if($affiliation = $user->getLocalizedAffiliation()) {
-                        $data_author['organizations'][] = [
-                            'name' => $affiliation
-                        ];
-                    };
-                    $data['searchArticle']['authors'][] = $data_author;
-                }
+//                if (in_array($stageAssignment->getUserGroupId(), $userGroupsAuthorIds)) {
+//                    $data_author = [
+//                        'firstName' => $user->getLocalizedGivenName(),
+//                        'lastName' => $user->getLocalizedFamilyName(),
+//                        'email' => $user->getEmail(),
+//                        'organizations' => []
+//                    ];
+//                    if($affiliation = $user->getLocalizedAffiliation()) {
+//                        $data_author['organizations'][] = [
+//                            'name' => $affiliation
+//                        ];
+//                    };
+//                    $data['searchArticle']['authors'][] = $data_author;
+//                }
                 if (in_array($stageAssignment->getUserGroupId(), $userGroupsEditorIds)) {
                     $data_editor = [
                         'firstName' => $user->getLocalizedGivenName(),
@@ -142,7 +158,6 @@ class WosRLHandler extends Handler
                     $data['excludedReviewers'][] = $data_editor;
                 }
             }
-
             try {
                 $json_data = json_encode($data, JSON_UNESCAPED_UNICODE);
                 $json_data = str_replace("\\\\", '\\', $json_data);
