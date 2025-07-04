@@ -162,7 +162,6 @@ class WosRLHandler extends Handler
             }
         } else {
             try {
-                curl_setopt($curl, CURLOPT_POST, true);
                 curl_setopt($curl, CURLOPT_URL, $url . '/' . $token['token'] . '/');
                 $response = curl_exec($curl);
                 if(curl_error($curl)) {
