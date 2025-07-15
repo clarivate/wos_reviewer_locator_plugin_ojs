@@ -67,7 +67,7 @@ class WosRLHandler extends Handler
         $context = $request->getContext();
         $templateManager = TemplateManager::getManager();
         // Get submission & publication
-        $submissionDAO = DAORegistry::getDAO('ArticleDAO');
+        $submissionDAO = DAORegistry::getDAO('SubmissionDAO');
         $submission_id = $args['submissionId'];
         $submission = $submissionDAO->getById($submission_id);
         // Fetch token and check expiration
@@ -147,7 +147,7 @@ class WosRLHandler extends Handler
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $json_data);
                 $response = curl_exec($curl);
                 if(curl_error($curl)) {
-                    return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
+                    return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
                 }
                 $body = json_decode($response);
                 $wosRLDao->insertObject($submission_id, [
@@ -158,14 +158,14 @@ class WosRLHandler extends Handler
                 $templateManager->assign('status', curl_getinfo($curl, CURLINFO_HTTP_CODE));
                 curl_close($curl);
             } catch (\Exception $e) {
-                return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
+                return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
             }
         } else {
             try {
                 curl_setopt($curl, CURLOPT_URL, $url . '/' . $token['token'] . '/');
                 $response = curl_exec($curl);
                 if(curl_error($curl)) {
-                    return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
+                    return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
                 }
                 $body = json_decode($response);
                 $reviewers = $body->recommendedReviewers;
@@ -174,7 +174,7 @@ class WosRLHandler extends Handler
                 curl_close($curl);
             } catch (\Exception $e) {
                 $wosRLDao->deleteObject($token['submission_id']);
-                return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
+                return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
             }
         }
         // Return formatted list, or empty template
