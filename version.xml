@@ -12,8 +12,8 @@
 <version>
 	<application>wosReviewerLocator</application>
 	<type>plugins.generic</type>
-	<release>1.3.1.0</release>
-	<date>2025-07-07</date>
+	<release>1.3.2.0</release>
+	<date>2025-07-16</date>
 	<lazy-load>1</lazy-load>
 	<class>WosReviewerLocatorPlugin</class>
 </version>
