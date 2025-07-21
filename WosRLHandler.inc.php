@@ -162,18 +162,18 @@ class WosRLHandler extends Handler
             }
         } else {
             try {
-                curl_setopt($curl, CURLOPT_URL, $url . '/' . $token['token'] . '/');
+                curl_setopt($curl, CURLOPT_URL, $url . '/' . $token->token . '/');
                 $response = curl_exec($curl);
                 if(curl_error($curl)) {
                     return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
                 }
                 $body = json_decode($response);
                 $reviewers = $body->recommendedReviewers;
-                $templateManager->assign('token', $token['token']);
+                $templateManager->assign('token', $token->token);
                 $templateManager->assign('status', curl_getinfo($curl, CURLINFO_HTTP_CODE));
                 curl_close($curl);
             } catch (\Exception $e) {
-                $wosRLDao->deleteObject($token['submission_id']);
+                $wosRLDao->deleteObject($token->submission_id);
                 return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
             }
         }

@@ -51,11 +51,12 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
     }
 
     /**
-     * @see Plugin::getInstallSchemaFile()
+     * @see Plugin::getInstallMigration()
      * @return string
      */
-    function getInstallSchemaFile() {
-        return $this->getPluginPath() . DIRECTORY_SEPARATOR . 'schema.xml';
+    function getInstallMigration() {
+        $this->import('classes.WosRLMigration');
+        return new WosRLMigration();
     }
 
     /**
@@ -189,8 +190,8 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
             $templateManager->assign('page_url', $page_url);
             $wosRLDao =& DAORegistry::getDAO('WosRLDAO');
             $token = $wosRLDao->getToken($args['submissionId']);
-            if($token && \Carbon\Carbon::now()->diffInDays($token['created_at']) >= 60) {
-                $wosRLDao->deleteObject($token['submission_id']);
+            if($token && \Carbon\Carbon::now()->diffInDays($token->created_at) >= 60) {
+                $wosRLDao->deleteObject($token->submission_id);
                 $token = null;
             }
             $templateManager->assign('wosrl_token', $token);

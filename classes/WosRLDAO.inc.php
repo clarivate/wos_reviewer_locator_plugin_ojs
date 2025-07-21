@@ -43,12 +43,8 @@ class WosRLDAO extends DAO {
      */
     function getToken(int $submission_id)
     {
-        $resource = $this->retrieve('SELECT * FROM wosrl_submission_tokens WHERE submission_id = ? AND locale = ?',
-            [$submission_id, AppLocale::getLocale()]);
-        $result = isset($resource->fields[0]) && $resource->fields[0] != 0 ? $resource->fields : null;
-        $resource->Close();
-        unset($resource);
-        return $result;
+        return $this->retrieve('SELECT * FROM wosrl_submission_tokens WHERE submission_id = ? AND locale = ?',
+            [$submission_id, AppLocale::getLocale()])->current();
     }
 
     /**
@@ -60,7 +56,6 @@ class WosRLDAO extends DAO {
     {
         $resource = $this->retrieve('SHOW TABLE STATUS WHERE Name = ?', ['wosrl_submission_tokens']);
         $result = isset($resource->fields[0]) && $resource->fields[0] !== 0 ? $resource->fields : null;
-        $resource->Close();
         unset($resource);
         return $result ? $result['Auto_increment'] + 1 : 1;
     }

@@ -63,7 +63,7 @@ class WosRLForm extends Form {
     function fetch($request, $template = null, $display = false) {
         $templateManager = TemplateManager::getManager($request);
         $templateManager->assign('pluginName', $this->_plugin->getName());
-        $range = range(15, 100);
+        $range = range(30, 100, 10);
         $templateManager->assign('recommendations', array_combine($range, $range));
         return parent::fetch($request, $template, $display);
     }
