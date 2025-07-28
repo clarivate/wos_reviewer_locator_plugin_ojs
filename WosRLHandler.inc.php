@@ -62,7 +62,11 @@ class WosRLHandler extends Handler
     function getReviewerList(array $args, $request)
     {
         set_time_limit(0);
-        $args = $request->getQueryArray();
+        try {
+            $args = $request->getQueryArray();
+        } catch(\Throwable $e) {
+            parse_str($request->getQueryString(), $args);
+        }
         $plugin = self::$plugin;
         $context = $request->getContext();
         $templateManager = TemplateManager::getManager();
@@ -90,8 +94,8 @@ class WosRLHandler extends Handler
             $data = [
                 'requestId' => $wosRLDao->getNextId(),
                 'searchArticle' => [
-                    'title' => $submission->getLocalizedData('title'),
-                    'abstract' => strip_tags($submission->getLocalizedData('abstract')),
+                    'title' => $submission->getLocalizedTitle(),
+                    'abstract' => strip_tags($submission->getLocalizedAbstract()),
                     'journal' => [
                         'name' => $context->getLocalizedName()
                     ],

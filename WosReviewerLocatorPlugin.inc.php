@@ -138,7 +138,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
      */
     function handleTemplateDisplay($hookName, $args)
     {
-        $request = PKPApplication::getRequest();
+        $request = Application::get()->getRequest();
         if($this->getEnabled()) {
             $templateManager = $args[0];
             // Assign our private stylesheet, for front and back ends.
@@ -175,14 +175,18 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
 
     function reviewPageFilter($output, $templateManager)
     {
-        $request = PKPApplication::getRequest();
+        $request = Application::get()->getRequest();
         $plugin = PluginRegistry::getPlugin('generic', $this->getName());
         $journalId = $request->getContext()->getId();
         $api_key = $plugin->getSetting($journalId, 'api_key');
         $exp = explode('/', $request->getRequestPath());
         preg_match('/pkp_linkaction_addReviewer/s', $output, $matches);
         if($api_key && in_array('reviewer-grid', $exp) && $matches && $matches[0]) {
-            $args = $request->getQueryArray();
+            try {
+                $args = $request->getQueryArray();
+            } catch(\Throwable $e) {
+                parse_str($request->getQueryString(), $args);
+            }
             $page_url = $request->getDispatcher()->url($request, ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, [
                 'submissionId' => $args['submissionId'],
                 'stageId' => $args['stageId']

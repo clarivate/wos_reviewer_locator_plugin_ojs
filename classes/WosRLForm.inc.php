@@ -76,7 +76,7 @@ class WosRLForm extends Form {
         $this->_plugin->updateSetting($this->_journalId, 'nor', $this->getData('nor'), 'int');
         $notificationManager = new NotificationManager();
         $notificationManager->createTrivialNotification(
-            PKPApplication::getRequest()->getUser()->getId(),
+            Application::get()->getRequest()->getUser()->getId(),
             NOTIFICATION_TYPE_SUCCESS,
             ['contents' => __('plugins.generic.wosrl.notifications.settings_updated')]
         );
