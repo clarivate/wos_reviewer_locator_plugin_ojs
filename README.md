@@ -9,7 +9,7 @@ You can read more about the Reviewer Locator here: https://clarivate.com/academi
 This plugin is licensed under the GNU General Public License v3.
 
 ### System Requirements
-- OJS 3.1 - 3.2 (work is underway to release support of later versions)
+- OJS 3.1 - 3.3 (work is underway to release support of later versions)
 
 ### Installation
 To install the plugin:
@@ -18,7 +18,7 @@ To install the plugin:
  - Enable the plugin by going to:  Settings > Website > Plugins > Installed Plugins and ticking "ENABLE" for the "Web of Science Reviewer Locator Plugin"
  - Set up correct credentials in the "Connection" tab under plugin
    - Enter the API key provided for your subscription by Clarivate.
-   - Choose the number of recommendations to display in the search results (default 50).
+   - Choose the number of recommendations to display in the search results (default 30).
 
 ### Usage
 For the plugin to work, the journal should have an active subscription to the Web of Science Reviewer Locator. Please see information about purchasing this service [here](https://clarivate.com/academia-government/scientific-and-academic-research/publisher-solutions/web-of-science-reviewer-locator/), or <a href="mailto:reviewservices@clarivate.com">email us</a> with your questions.
