@@ -1,25 +1,36 @@
 <?php
 
 /**
- * @file plugins/generic/wosReviewerLocator/classes/WosRLForm.php
+ * @file plugins/generic/wosReviewerLocator/classes/wosRLForm.php
  *
  * Copyright (c) 2025 Clarivate
  * Distributed under the GNU GPL v3.
  *
- * @class WosRLForm
+ * @class wosRLForm
  *
  * @brief Plugin settings: connect to a Web of Science - Reviewer Locator service
  */
 
-import('lib.pkp.classes.form.Form');
+namespace APP\plugins\generic\wosReviewerLocator\classes;
 
-class WosRLForm extends Form {
+use APP\core\Application;
+use APP\notification\NotificationManager;
+use APP\template\TemplateManager;
+use Exception;
+use PKP\form\Form;
+use PKP\form\validation\FormValidator;
+use PKP\form\validation\FormValidatorCSRF;
+use PKP\form\validation\FormValidatorPost;
+use PKP\notification\PKPNotification;
+use APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin;
+
+class wosRLForm extends Form {
 
     /** @var $_plugin object */
-    var $_plugin;
+    var object $_plugin;
 
     /** @var $_journalId int */
-    var $_journalId;
+    var int $_journalId;
 
     /**
      * Constructor
@@ -32,8 +43,8 @@ class WosRLForm extends Form {
         $this->_plugin = $plugin;
         $this->_journalId = $journalId;
         parent::__construct($plugin->getTemplateResource('settings.tpl'));
-        $this->addCheck(new FormValidator($this, 'api_key', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.wosrl.settings.api_key_required'));
-        $this->addCheck(new FormValidator($this, 'nor', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.wosrl.settings.nor_required'));
+        $this->addCheck(new FormValidator($this, 'api_key', FormValidator::FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.wosrl.settings.api_key_required'));
+        $this->addCheck(new FormValidator($this, 'nor', FormValidator::FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.wosrl.settings.nor_required'));
         $this->addCheck(new FormValidatorPost($this));
         $this->addCheck(new FormValidatorCSRF($this));
     }
@@ -41,7 +52,7 @@ class WosRLForm extends Form {
     /**
      * @see Form::initData()
      */
-    function initData() {
+    function initData(): void {
         $this->setData('api_key', $this->_plugin->getSetting($this->_journalId, 'api_key'));
         $this->setData('nor', $this->_plugin->getSetting($this->_journalId, 'nor') ?? 30);
     }
@@ -49,7 +60,7 @@ class WosRLForm extends Form {
     /**
      * @see Form::readInputData()
      */
-    function readInputData() {
+    function readInputData(): void {
         $this->readUserVars(['api_key']);
         $this->readUserVars(['nor']);
     }
@@ -60,7 +71,7 @@ class WosRLForm extends Form {
      * @copydoc Form::fetch()
      * @throws Exception
      */
-    function fetch($request, $template = null, $display = false) {
+    function fetch($request, $template = null, $display = false): ?string {
         $templateManager = TemplateManager::getManager($request);
         $templateManager->assign('pluginName', $this->_plugin->getName());
         $range = range(30, 100, 10);
@@ -71,13 +82,13 @@ class WosRLForm extends Form {
     /**
      * @see Form::execute()
      */
-    function execute(...$functionArgs) {
+    function execute(...$functionArgs): void {
         $this->_plugin->updateSetting($this->_journalId, 'api_key', $this->getData('api_key'), 'string');
         $this->_plugin->updateSetting($this->_journalId, 'nor', $this->getData('nor'), 'int');
         $notificationManager = new NotificationManager();
         $notificationManager->createTrivialNotification(
             Application::get()->getRequest()->getUser()->getId(),
-            NOTIFICATION_TYPE_SUCCESS,
+            PKPNotification::NOTIFICATION_TYPE_SUCCESS,
             ['contents' => __('plugins.generic.wosrl.notifications.settings_updated')]
         );
         parent::execute(...$functionArgs);

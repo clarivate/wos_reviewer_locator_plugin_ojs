@@ -6,38 +6,42 @@
  * @class WosReviewerLocatorPlugin
  */
 
-import('lib.pkp.classes.plugins.GenericPlugin');
+namespace APP\plugins\generic\wosReviewerLocator;
+
+use APP\core\Application;
+use PKP\core\JSONMessage;
+use APP\template\TemplateManager;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
+use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
+use PKP\plugins\PluginRegistry;
+use PKP\db\DAO;
+
+use APP\plugins\generic\wosReviewerLocator\classes\wosRLForm;
+use APP\plugins\generic\wosReviewerLocator\classes\wosRLMigration;
+use APP\plugins\generic\wosReviewerLocator\classes\wosRLDAO;
 
 class WosReviewerLocatorPlugin extends GenericPlugin {
 
     /**
      * @copydoc Plugin::register()
      */
-    function register($category, $path, $mainContextId = null)
+    public function register($category, $path, $mainContextId = null): bool
     {
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
-            $this->import('classes.WosRLDAO');
-            DAORegistry::registerDAO('WosRLDAO', new WosRLDao());
-            HookRegistry::register('TemplateManager::display', array(&$this, 'handleTemplateDisplay'));
-            HookRegistry::register('TemplateManager::fetch', array(&$this, 'handleTemplateFetch'));
-            HookRegistry::register('LoadHandler', array(&$this, 'loadHandler'));
+            Hook::add('TemplateManager::display', [$this, 'handleTemplateDisplay']);
+            Hook::add('TemplateManager::fetch', [$this, 'handleTemplateFetch']);
+            Hook::add('LoadHandler', [$this, 'loadHandler']);
         }
         return $success;
     }
 
     /**
-     * Get the symbolic name of this plugin
-     * @return string
-     */
-    function getName() {
-        return 'WosReviewerLocatorPlugin';
-    }
-
-    /**
      * @copydoc Plugin::getDisplayName()
      */
-    function getDisplayName()
+    public function getDisplayName(): string
     {
         return __('plugins.generic.wosrl.display_name');
     }
@@ -45,18 +49,17 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
     /**
      * @copydoc Plugin::getDescription()
      */
-    function getDescription()
+    public function getDescription(): string
     {
         return __('plugins.generic.wosrl.description');
     }
 
     /**
-     * @see Plugin::getInstallMigration()
-     * @return string
+     * @copydoc Plugin::getInstallMigration()
      */
-    function getInstallMigration() {
-        $this->import('classes.WosRLMigration');
-        return new WosRLMigration();
+    public function getInstallMigration(): wosRLMigration
+    {
+        return new wosRLMigration();
     }
 
     /**
@@ -64,7 +67,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
      *
      * @return string
      */
-    function getStyleSheet()
+    function getStyleSheet(): string
     {
         return $this->getPluginPath() . DIRECTORY_SEPARATOR . 'styles' . DIRECTORY_SEPARATOR . 'wosrl.css';
     }
@@ -72,7 +75,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
     /**
      * @copydoc Plugin::getActions()
      */
-    public function getActions($request, $actionArgs)
+    public function getActions($request, $actionArgs): array
     {
         $router = $request->getRouter();
         return array_merge(
@@ -102,8 +105,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         switch ($request->getUserVar('verb')) {
             case 'connect':
                 $context = $request->getContext();
-                $this->import('classes.WosRLForm');
-                $form = new WosRLForm($this, $context->getId());
+                $form = new wosRLForm($this, $context->getId());
                 if ($request->getUserVar('save')) {
                     $form->readInputData();
                     if ($form->validate()) {
@@ -118,13 +120,12 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         return parent::manage($args, $request);
     }
 
-    function loadHandler($hookName, $params)
+    function loadHandler($hookName, $params): bool
     {
         if($params[0] == 'wosrl' && $this->getEnabled()) {
             if ($params[1] == 'getReviewerList') {
-                define('HANDLER_CLASS', 'WosRLHandler');
-                $this->import('WosRLHandler');
-                WosRLHandler::setPlugin($this);
+                define('HANDLER_CLASS', wosRLHandler::class);
+                wosRLHandler::setPlugin($this);
                 return true;
             }
         }
@@ -136,7 +137,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
      * summaries; add data citation to reading tools' suppfiles and metadata views.
      * @see TemplateManager::display()
      */
-    function handleTemplateDisplay($hookName, $args)
+    function handleTemplateDisplay($hookName, $args): bool
     {
         $request = Application::get()->getRequest();
         if($this->getEnabled()) {
@@ -165,7 +166,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
      * Hook callback: register output filter to display results.
      * @see TemplateManager::fetch()
      */
-    function handleTemplateFetch($hookName, $args)
+    function handleTemplateFetch($hookName, $args): bool
     {
         if ($this->getEnabled() && $args[1] == 'controllers/grid/grid.tpl') {
             $args[0]->registerFilter('output', [$this, 'reviewPageFilter']);
@@ -182,17 +183,13 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         $exp = explode('/', $request->getRequestPath());
         preg_match('/pkp_linkaction_addReviewer/s', $output, $matches);
         if($api_key && in_array('reviewer-grid', $exp) && $matches && $matches[0]) {
-            try {
-                $args = $request->getQueryArray();
-            } catch(\Throwable $e) {
-                parse_str($request->getQueryString(), $args);
-            }
-            $page_url = $request->getDispatcher()->url($request, ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, [
+            $args = $request->getQueryArray();
+            $page_url = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, [
                 'submissionId' => $args['submissionId'],
                 'stageId' => $args['stageId']
             ]);
             $templateManager->assign('page_url', $page_url);
-            $wosRLDao =& DAORegistry::getDAO('WosRLDAO');
+            $wosRLDao = new wosRLDAO();
             $token = $wosRLDao->getToken($args['submissionId']);
             if($token && \Carbon\Carbon::now()->diffInDays($token->created_at) >= 60) {
                 $wosRLDao->deleteObject($token->submission_id);
@@ -205,5 +202,9 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         return $output;
     }
 
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin', '\WosReviewerLocatorPlugin');
 }
 

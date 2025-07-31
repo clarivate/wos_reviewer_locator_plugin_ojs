@@ -1,24 +1,37 @@
 <?php
 
 /**
- * @file plugins/generic/wosReviewerLocator/WosRLHandler.php
+ * @file plugins/generic/wosReviewerLocator/wosRLHandler.php
  *
  * Copyright (c) 2025 Clarivate
  * Distributed under the GNU GPL v3.
  *
- * @class WosRLHandler
+ * @class wosRLHandler
  *
  * @brief Handle Web of Science - Reviewer Locator requests
  */
 
-import('classes.handler.Handler');
-import('lib.pkp.classes.core.JSONMessage');
+namespace APP\plugins\generic\wosReviewerLocator;
 
-class WosRLHandler extends Handler
+use APP\core\Application;
+use APP\handler\Handler;
+use APP\core\Request;
+use APP\facades\Repo;
+use APP\template\TemplateManager;
+
+use PKP\db\DAORegistry;
+use PKP\core\JSONMessage;
+use PKP\facades\Locale;
+use PKP\security\Role;
+use PKP\security\authorization\ContextAccessPolicy;
+
+use APP\plugins\generic\wosReviewerLocator\classes\wosRLDAO;
+
+class wosRLHandler extends Handler
 {
 
     /** @var WosReviewerLocatorPlugin The Web of Science - Reviewer Locator plugin */
-    static $plugin;
+    static WosReviewerLocatorPlugin $plugin;
 
     /**
      * Constructor
@@ -26,7 +39,7 @@ class WosRLHandler extends Handler
     public function __construct()
     {
         parent::__construct();
-        $this->addRoleAssignment([ROLE_ID_MANAGER, ROLE_ID_SITE_ADMIN], 'getReviewerList');
+        $this->addRoleAssignment([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN], 'getReviewerList');
     }
 
     /**
@@ -35,7 +48,6 @@ class WosRLHandler extends Handler
      */
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.ContextAccessPolicy');
         $this->addPolicy(new ContextAccessPolicy($request, $roleAssignments));
         return parent::authorize($request, $args, $roleAssignments);
     }
@@ -46,7 +58,7 @@ class WosRLHandler extends Handler
      * @param $plugin
      * @return void
      */
-    static function setPlugin($plugin)
+    static function setPlugin($plugin): void
     {
         self::$plugin = $plugin;
     }
@@ -62,40 +74,31 @@ class WosRLHandler extends Handler
     function getReviewerList(array $args, $request)
     {
         set_time_limit(0);
-        try {
-            $args = $request->getQueryArray();
-        } catch(\Throwable $e) {
-            parse_str($request->getQueryString(), $args);
-        }
+        $args = $request->getQueryArray();
         $plugin = self::$plugin;
         $context = $request->getContext();
         $templateManager = TemplateManager::getManager();
+        $httpClient = Application::get()->getHttpClient();
         // Get submission & publication
-        $submissionDAO = DAORegistry::getDAO('SubmissionDAO');
         $submission_id = $args['submissionId'];
-        $submission = $submissionDAO->getById($submission_id);
+        $submission = Repo::submission()->get($submission_id);
+        $publication = $submission->getCurrentPublication();
         // Fetch token and check expiration
-        $wosRLDao = DAORegistry::getDAO('WosRLDAO');
+        $wosRLDao = new wosRLDAO();
         $token = $wosRLDao->getToken($submission_id);
         // Fetch records
         $url = 'https://api.clarivate.com/api/wosrl';
         $headers = [
-            'X-ApiKey: ' . $plugin->getSetting($context->getId(), 'api_key'),
-            'Content-Type: application/json'
+            'X-ApiKey' => $plugin->getSetting($context->getId(), 'api_key'),
+            'Content-Type' => 'application/json'
         ];
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => $headers,
-        ]);
         if( ! $token) {
             // Set post data
             $data = [
                 'requestId' => $wosRLDao->getNextId(),
                 'searchArticle' => [
-                    'title' => $submission->getLocalizedTitle(),
-                    'abstract' => strip_tags($submission->getLocalizedAbstract()),
+                    'title' => $publication->getLocalizedData('title'),
+                    'abstract' => strip_tags($publication->getLocalizedData('abstract')),
                     'journal' => [
                         'name' => $context->getLocalizedName()
                     ],
@@ -105,35 +108,36 @@ class WosRLHandler extends Handler
                 'searchYears' => 5,
                 'numRecommendations' => $plugin->getSetting($context->getId(), 'nor')
             ];
-            // Authors
-            foreach ($submission->getAuthors() as $author) {
-                $data_author = [
-                    'firstName' => $author->getLocalizedGivenName(),
-                    'lastName' => $author->getLocalizedFamilyName(),
-                    'email' => $author->getEmail(),
-                    'organizations' => []
-                ];
-                if($affiliation = $author->getLocalizedAffiliation()) {
-                    $data_author['organizations'][] = [
-                        'name' => $affiliation
-                    ];
-                };
-                $data['searchArticle']['authors'][] = $data_author;
-            }
-            // Editors
-            $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
-            $userGroups = $userGroupDao->getByContextId($context->getId())->toArray();
+            $userGroups = Repo::userGroup()->getCollector()->filterByContextIds([$context->getId()])->getMany()->toArray();
+            $userGroupsAuthorIds = array_map(function ($userGroup) {
+                return $userGroup->getId();
+            }, array_filter($userGroups, function ($userGroup) {
+                return in_array($userGroup->getRoleId(), [Role::ROLE_ID_AUTHOR]);
+            }));
             $userGroupsEditorIds = array_map(function ($userGroup) {
                 return $userGroup->getId();
             }, array_filter($userGroups, function ($userGroup) {
-                return in_array($userGroup->getRoleId(), [ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR]);
+                return in_array($userGroup->getRoleId(), [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR]);
             }));
-            $userDao = DAORegistry::getDAO('UserDAO');
             $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
             $stageAssignmentFactory = $stageAssignmentDao->getBySubmissionAndStageId($submission_id, $args['stageId']);
             while ($stageAssignment = $stageAssignmentFactory->next()) {
                 $userId = $stageAssignment->getUserId();
-                $user = $userDao->getById($userId);
+                $user = Repo::user()->get($userId);
+                if (in_array($stageAssignment->getUserGroupId(), $userGroupsAuthorIds)) {
+                    $data_author = [
+                        'firstName' => $user->getLocalizedGivenName(),
+                        'lastName' => $user->getLocalizedFamilyName(),
+                        'email' => $user->getEmail(),
+                        'organizations' => []
+                    ];
+                    if($affiliation = $user->getLocalizedAffiliation()) {
+                        $data_author['organizations'][] = [
+                            'name' => $affiliation
+                        ];
+                    };
+                    $data['searchArticle']['authors'][] = $data_author;
+                }
                 if (in_array($stageAssignment->getUserGroupId(), $userGroupsEditorIds)) {
                     $data_editor = [
                         'firstName' => $user->getLocalizedGivenName(),
@@ -144,41 +148,33 @@ class WosRLHandler extends Handler
                 }
             }
             try {
-                $json_data = json_encode($data, JSON_UNESCAPED_UNICODE);
-                $json_data = str_replace("\\\\", '\\', $json_data);
-                curl_setopt($curl, CURLOPT_POST, true);
-                curl_setopt($curl, CURLOPT_URL, $url);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $json_data);
-                $response = curl_exec($curl);
-                if(curl_error($curl)) {
-                    return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
-                }
-                $body = json_decode($response);
+                $response = $httpClient->request('POST', $url, [
+                    'headers' => $headers,
+                    'body' => json_encode($data, JSON_UNESCAPED_UNICODE)
+                ]);
+                $body = json_decode($response->getBody());
                 $wosRLDao->insertObject($submission_id, [
                     'token' => $body->searchToken
                 ]);
                 $reviewers = $body->recommendedReviewers;
                 $templateManager->assign('token', $body->searchToken);
-                $templateManager->assign('status', curl_getinfo($curl, CURLINFO_HTTP_CODE));
-                curl_close($curl);
+                $templateManager->assign('status', $response->getStatusCode());
             } catch (\Exception $e) {
-                return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
+                return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
             }
         } else {
             try {
-                curl_setopt($curl, CURLOPT_URL, $url . '/' . $token->token . '/');
-                $response = curl_exec($curl);
-                if(curl_error($curl)) {
-                    return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
-                }
-                $body = json_decode($response);
+                $response = $httpClient->request('GET', $url . '/' . $token->token . '/', [
+                    'headers' => $headers
+                ]);
+                $body = json_decode($response->getBody());
                 $reviewers = $body->recommendedReviewers;
                 $templateManager->assign('token', $token->token);
-                $templateManager->assign('status', curl_getinfo($curl, CURLINFO_HTTP_CODE));
-                curl_close($curl);
+                $templateManager->assign('status', $response->getStatusCode());
             } catch (\Exception $e) {
+                // Temporary delete token...
                 $wosRLDao->deleteObject($token->submission_id);
-                return new JSONMessage(false, __('plugins.generic.wosrl.error.general'));
+                return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
             }
         }
         // Return formatted list, or empty template

@@ -1,19 +1,23 @@
 <?php
 
 /**
- * @file plugins/generic/wosReviewerLocator/classes/WosrlDAO.php
+ * @file plugins/generic/wosReviewerLocator/classes/wosrlDAO.php
  *
  * Copyright (c) 2025 Clarivate
  * Distributed under the GNU GPL v3.
  *
- * @class WosrlDAO
+ * @class wosrlDAO
  *
  * @brief Operations for retrieving and modifying wosrl_submissions_settings records.
  */
 
-import('lib.pkp.classes.db.DAO');
+namespace APP\plugins\generic\wosReviewerLocator\classes;
 
-class WosRLDAO extends DAO {
+use Generator;
+use PKP\db\DAO;
+use PKP\facades\Locale;
+
+class wosRLDAO extends DAO {
 
     /**
      * Insert a new record
@@ -22,11 +26,11 @@ class WosRLDAO extends DAO {
      * @param array $data
      * @return int|null
      */
-    function insertObject(int $submission_id, array $data)
+    function insertObject(int $submission_id, array $data): int|null
     {
         $fields = array_merge([
             'submission_id' => $submission_id,
-            'locale' => AppLocale::getLocale(),
+            'locale' => Locale::getLocale(),
             'token' => null,
             'created_at' => \Carbon\Carbon::now()->format('Y-m-d')
         ], $data);
@@ -41,10 +45,10 @@ class WosRLDAO extends DAO {
      * @param int $submission_id
      * @return mixed
      */
-    function getToken(int $submission_id)
+    function getToken(int $submission_id): mixed
     {
         return $this->retrieve('SELECT * FROM wosrl_submission_tokens WHERE submission_id = ? AND locale = ?',
-            [$submission_id, AppLocale::getLocale()])->current();
+            [$submission_id, Locale::getLocale()])->current();
     }
 
     /**
@@ -52,12 +56,10 @@ class WosRLDAO extends DAO {
      *
      * @return mixed
      */
-    function getNextId()
+    function getNextId(): mixed
     {
-        $resource = $this->retrieve('SHOW TABLE STATUS WHERE Name = ?', ['wosrl_submission_tokens']);
-        $result = isset($resource->fields[0]) && $resource->fields[0] !== 0 ? $resource->fields : null;
-        unset($resource);
-        return $result ? $result['Auto_increment'] + 1 : 1;
+        $current = $this->retrieve('SHOW TABLE STATUS WHERE Name = ?', ['wosrl_submission_tokens'])->current();
+        return $current->Auto_increment + 1;
     }
 
     /**
@@ -66,7 +68,7 @@ class WosRLDAO extends DAO {
      * @param int $submission_id
      * @return bool|int|null
      */
-    function deleteObject(int $submission_id)
+    function deleteObject(int $submission_id): bool|int|null
     {
         return $this->update('DELETE FROM wosrl_submission_tokens WHERE submission_id = ?', [$submission_id]);
     }
