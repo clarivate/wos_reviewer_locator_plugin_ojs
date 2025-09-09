@@ -7,7 +7,7 @@
  * Web of Science - Reviewer Locator plugin - grid template
  *}
 
-<div class="pkp_controllers_grid">
+<div class="pkp_controllers_grid" data-page-url="{$page_url}" data-has-token="{if $wosrl_token}true{else}false{/if}">
     <div id="wosRLHeader" class="header">
         <h4>{translate key="plugins.generic.wosrl.grid.title"}</h4>
         <ul class="actions">
@@ -18,18 +18,6 @@
             </li>
             <li><a href="#" class="wosrl-toggle"></a></li>
         </ul>
-        <script type="text/javascript">
-            $(function() {
-                const wrapper = $('#wosRLHeader');
-                $('a.wosrl-toggle', wrapper).on('click', function() {
-                    $(this).toggleClass('closed');
-                    $('a#wosRLSearch', wrapper).toggleClass('pkp_helpers_display_none');
-                    $('#wosRLGrid').toggleClass('pkp_helpers_display_none');
-                    return false;
-                });
-                {if $wosrl_token}wosRLList('{$page_url}');{/if}
-            });
-        </script>
     </div>
     <div id="wosRLGrid">
         <div class="wosrl-placeholder">

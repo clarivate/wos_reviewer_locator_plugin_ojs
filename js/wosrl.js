@@ -8,6 +8,81 @@
  *
  */
 
+(function() {
+
+    // Wait for DOM to be ready and inject
+    function wosRLInit() {
+        // Check if we're on the editorial workflow page
+        const currentUrl = window.location.href;
+        if (!currentUrl.includes('dashboard/editorial') || !currentUrl.includes('workflowSubmissionId')) {
+            return;
+        }
+        // Extract submission ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.get('workflowSubmissionId')) {
+            return;
+        }
+        // Check if already injected
+        if (document.getElementById('wosReviewerLocator')) {
+            return;
+        }
+        // Find reviewer-manager element and inject
+        const reviewerManager = document.querySelector('[data-cy="reviewer-manager"]');
+        if (reviewerManager) {
+            const wosContainer = document.createElement('div');
+            wosContainer.id = 'wosReviewerLocator';
+            // Insert after reviewer-manager
+            if (reviewerManager.nextSibling) {
+                reviewerManager.parentNode.insertBefore(wosContainer, reviewerManager.nextSibling);
+            } else {
+                reviewerManager.parentNode.appendChild(wosContainer);
+            }
+            wosRLTemplate();
+        }
+    }
+
+    function wosRLTemplate() {
+        const contentDiv = document.getElementById('wosReviewerLocator');
+        // Load grid.tpl template content directly
+        fetch(window.wosReviewerLocatorConfig.templateUrl, {
+            method: 'GET',
+            credentials: 'same-origin'
+        }).then(response => response.text()).then(htmlContent => {
+            // Just load the HTML content directly without any processing
+            contentDiv.innerHTML = htmlContent;
+            
+            // Initialize the toggle functionality after template is loaded
+            const wrapper = $('#wosRLHeader');
+            $('a.wosrl-toggle', wrapper).on('click', function() {
+                $(this).toggleClass('closed');
+                $('a#wosRLSearch', wrapper).toggleClass('pkp_helpers_display_none');
+                $('#wosRLGrid').toggleClass('pkp_helpers_display_none');
+                return false;
+            });
+            
+            // Check if we have a token and should load the list immediately
+            const gridContainer = $('.pkp_controllers_grid', contentDiv);
+            const hasToken = gridContainer.data('has-token') === 'true' || gridContainer.data('has-token') === true;
+            const pageUrl = gridContainer.data('page-url');
+            
+            if (hasToken && pageUrl) {
+                wosRLList(pageUrl);
+            }
+        }).catch(error => {
+            contentDiv.innerHTML = '<div class="wosrl-error">Error loading template</div>';
+        });
+    }
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wosRLInit);
+    } else {
+        wosRLInit();
+    }
+    // Also try after a short delay for Vue components
+    setTimeout(wosRLInit, 1000);
+
+})();
+
 function wosRLList(page_url) {
     const wrapper = $('#wosRLGrid');
     $('a#wosRLSearch', wrapper.parent()).addClass('wosrl-hidden');

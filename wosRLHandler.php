@@ -39,7 +39,7 @@ class wosRLHandler extends Handler
     public function __construct()
     {
         parent::__construct();
-        $this->addRoleAssignment([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN], 'getReviewerList');
+        $this->addRoleAssignment([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN], ['getReviewerList', 'getTemplate']);
     }
 
     /**
@@ -61,6 +61,34 @@ class wosRLHandler extends Handler
     static function setPlugin($plugin): void
     {
         self::$plugin = $plugin;
+    }
+
+    /**
+     * Get default grid template
+     *
+     * @param array $args
+     * @param $request
+     * @return void
+     * @throws Exception
+     */
+    function getTemplate(array $args, $request) {
+        $plugin = self::$plugin;
+        $templateManager = TemplateManager::getManager();
+        $params = $request->getQueryArray();
+        $page_url = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getReviewerList', null, [
+            'submissionId' => $params['submissionId'] ?? null,
+            'stageId' => $params['stageId'] ?? null
+        ]);
+        $templateManager->assign('page_url', $page_url);
+        $wosRLDao = new wosRLDAO();
+        $token = $wosRLDao->getToken($params['submissionId']);
+        if($token && \Carbon\Carbon::parse($token->created_at)->addDays(60)->isPast()) {
+            // Token is older than 60 days, delete it
+            $wosRLDao->deleteObject($token->submission_id);
+            $token = null;
+        }
+        $templateManager->assign('wosrl_token', $token);
+        return $templateManager->fetch($plugin->getTemplateResource('grid.tpl'));
     }
 
     /**
@@ -116,7 +144,7 @@ class wosRLHandler extends Handler
                     'email' => $author->getEmail(),
                     'organizations' => []
                 ];
-                if($affiliation = $author->getLocalizedAffiliation()) {
+                if($affiliation = $author->getLocalizedData('affiliation')) {
                     $data_author['organizations'][] = [
                         'name' => $affiliation
                     ];
@@ -124,25 +152,24 @@ class wosRLHandler extends Handler
                 $data['searchArticle']['authors'][] = $data_author;
             }
             // Editors
-            $userGroups = Repo::userGroup()->getCollector()->filterByContextIds([$context->getId()])->getMany()->toArray();
-            $userGroupsEditorIds = array_map(function ($userGroup) {
-                return $userGroup->getId();
-            }, array_filter($userGroups, function ($userGroup) {
-                return in_array($userGroup->getRoleId(), [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR]);
-            }));
-            $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-            $stageAssignmentFactory = $stageAssignmentDao->getBySubmissionAndStageId($submission_id, $args['stageId']);
-            while ($stageAssignment = $stageAssignmentFactory->next()) {
-                $userId = $stageAssignment->getUserId();
-                $user = Repo::user()->get($userId);
-                if (in_array($stageAssignment->getUserGroupId(), $userGroupsEditorIds)) {
-                    $data_editor = [
-                        'firstName' => $user->getLocalizedGivenName(),
-                        'lastName' => $user->getLocalizedFamilyName(),
-                        'email' => $user->getEmail()
-                    ];
-                    $data['excludedReviewers'][] = $data_editor;
-                }
+            // Use Eloquent query to get user groups for this context
+            $userGroups = \PKP\userGroup\UserGroup::withContextIds([$context->getId()])
+                ->whereIn('role_id', [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR])
+                ->get();
+            $userGroupsEditorIds = $userGroups->pluck('user_group_id')->toArray();
+            // Use Eloquent model to get stage assignments
+            $stageAssignments = \PKP\stageAssignment\StageAssignment::withSubmissionIds([$submission_id])
+                ->withStageIds([$args['stageId']])
+                ->whereIn('user_group_id', $userGroupsEditorIds)
+                ->get();
+            foreach ($stageAssignments as $stageAssignment) {
+                $user = Repo::user()->get($stageAssignment->userId);
+                $data_editor = [
+                    'firstName' => $user->getLocalizedGivenName(),
+                    'lastName' => $user->getLocalizedFamilyName(),
+                    'email' => $user->getEmail()
+                ];
+                $data['excludedReviewers'][] = $data_editor;
             }
             try {
                 $response = $httpClient->request('POST', $url, [

@@ -21,7 +21,7 @@ use PKP\form\Form;
 use PKP\form\validation\FormValidator;
 use PKP\form\validation\FormValidatorCSRF;
 use PKP\form\validation\FormValidatorPost;
-use PKP\notification\PKPNotification;
+use PKP\notification\Notification;
 use APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin;
 
 class wosRLForm extends Form {
@@ -88,7 +88,7 @@ class wosRLForm extends Form {
         $notificationManager = new NotificationManager();
         $notificationManager->createTrivialNotification(
             Application::get()->getRequest()->getUser()->getId(),
-            PKPNotification::NOTIFICATION_TYPE_SUCCESS,
+            Notification::NOTIFICATION_TYPE_SUCCESS,
             ['contents' => __('plugins.generic.wosrl.notifications.settings_updated')]
         );
         parent::execute(...$functionArgs);
