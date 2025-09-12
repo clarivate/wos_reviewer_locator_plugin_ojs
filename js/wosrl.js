@@ -9,36 +9,97 @@
  */
 
 (function() {
+    
+    // Track injection state and current submission ID
+    let injectionSuccessful = false;
+    let currentSubmissionId = null;
+    let observer = null;
 
     // Wait for DOM to be ready and inject
     function wosRLInit() {
         // Check if we're on the editorial workflow page
         const currentUrl = window.location.href;
-        if (!currentUrl.includes('dashboard/editorial') || !currentUrl.includes('workflowSubmissionId')) {
-            return;
+        
+        if (!currentUrl.includes('dashboard/editorial')) {
+            return false;
         }
+        
         // Extract submission ID from URL
         const urlParams = new URLSearchParams(window.location.search);
-        if (!urlParams.get('workflowSubmissionId')) {
-            return;
+        const workflowSubmissionId = urlParams.get('workflowSubmissionId');
+        
+        if (!workflowSubmissionId) {
+            return false; // Not on a submission workflow page
         }
-        // Check if already injected
-        if (document.getElementById('wosReviewerLocator')) {
-            return;
+        
+        // Check if already injected for this submission
+        if (injectionSuccessful && currentSubmissionId === workflowSubmissionId) {
+            return true;
         }
-        // Find reviewer-manager element and inject
-        const reviewerManager = document.querySelector('[data-cy="reviewer-manager"]');
-        if (reviewerManager) {
-            const wosContainer = document.createElement('div');
-            wosContainer.id = 'wosReviewerLocator';
-            // Insert after reviewer-manager
-            if (reviewerManager.nextSibling) {
-                reviewerManager.parentNode.insertBefore(wosContainer, reviewerManager.nextSibling);
-            } else {
-                reviewerManager.parentNode.appendChild(wosContainer);
+        
+        // Reset state if this is a different submission
+        if (currentSubmissionId !== workflowSubmissionId) {
+            injectionSuccessful = false;
+            currentSubmissionId = workflowSubmissionId;
+            // Remove any existing container from previous submission
+            const existingContainer = document.getElementById('wosReviewerLocator');
+            if (existingContainer) {
+                existingContainer.remove();
             }
-            wosRLTemplate();
         }
+        
+        // Find reviewer-manager element
+        const reviewerManagerElement = document.querySelector('[data-cy="reviewer-manager"]');
+        if (!reviewerManagerElement) {
+            return false; // Not ready yet
+        }
+        
+        // Check if config is available, create dynamically if needed
+        if (!window.wosReviewerLocatorConfig || !window.wosReviewerLocatorConfig.ready) {
+            // Try to create config dynamically based on current URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const submissionId = urlParams.get('workflowSubmissionId');
+            const workflowMenuKey = urlParams.get('workflowMenuKey');
+            
+            if (submissionId) {
+                // Extract stage ID from workflowMenuKey (format: workflow_3_1)
+                let stageId = null;
+                if (workflowMenuKey) {
+                    const match = workflowMenuKey.match(/workflow_(\d+)_(\d+)/);
+                    if (match) {
+                        stageId = match[1]; // First number is usually stage ID
+                    }
+                }
+                
+                // Create a basic config
+                const baseUrl = window.location.origin + window.location.pathname.replace(/\/dashboard\/editorial.*$/, '');
+                const templateUrl = baseUrl + '/wosrl/getTemplate?submissionId=' + submissionId + (stageId ? '&stageId=' + stageId : '');
+                
+                window.wosReviewerLocatorConfig = {
+                    templateUrl: templateUrl,
+                    ready: true
+                };
+            } else {
+                return false;
+            }
+        }
+        
+        // Inject the plugin UI
+        const wosContainer = document.createElement('div');
+        wosContainer.id = 'wosReviewerLocator';
+        
+        // Insert after reviewer-manager
+        if (reviewerManagerElement.nextSibling) {
+            reviewerManagerElement.parentNode.insertBefore(wosContainer, reviewerManagerElement.nextSibling);
+        } else {
+            reviewerManagerElement.parentNode.appendChild(wosContainer);
+        }
+        
+        wosRLTemplate();
+        
+        // Mark as successfully injected
+        injectionSuccessful = true;
+        return true;
     }
 
     function wosRLTemplate() {
@@ -72,14 +133,55 @@
             contentDiv.innerHTML = '<div class="wosrl-error">Error loading template</div>';
         });
     }
-    // Start when DOM is ready
+    
+    // Simple and efficient monitoring approach
+    function wosRLMonitoring() {
+        // Single MutationObserver to watch for DOM changes
+        if (window.MutationObserver) {
+            observer = new MutationObserver(function(mutations) {
+                // Only check if we haven't already injected successfully
+                if (!injectionSuccessful) {
+                    wosRLInit();
+                }
+            });
+            
+            // Start observing when body is ready
+            if (document.body) {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            } else {
+                // Wait for body
+                setTimeout(wosRLMonitoring, 100);
+                return;
+            }
+        }
+        
+        // Simple URL monitoring for navigation
+        let lastUrl = window.location.href;
+        setInterval(function() {
+            const currentUrl = window.location.href;
+            if (currentUrl !== lastUrl) {
+                lastUrl = currentUrl;
+                // Reset state and try injection
+                injectionSuccessful = false;
+                currentSubmissionId = null;
+                setTimeout(wosRLInit, 100);
+            }
+        }, 250);
+    }
+    
+    // Initial setup
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', wosRLInit);
+        document.addEventListener('DOMContentLoaded', function() {
+            wosRLInit();
+            wosRLMonitoring();
+        });
     } else {
         wosRLInit();
+        wosRLMonitoring();
     }
-    // Also try after a short delay for Vue components
-    setTimeout(wosRLInit, 1000);
 
 })();
 
