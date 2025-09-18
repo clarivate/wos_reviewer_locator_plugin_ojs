@@ -148,8 +148,9 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         $api_key = $this->getSetting($journalId, 'api_key');
         $templateManager = $args[0];
         $template = $args[1];
-        if($this->getEnabled() && $template === 'dashboard/editors.tpl' && $api_key) {
-            $params = $request->getQueryArray();
+        $params = $request->getQueryArray();
+        $submissionId = isset($params['workflowSubmissionId']) ? $params['workflowSubmissionId'] : null;
+        if($this->getEnabled() && $template === 'dashboard/editors.tpl' && $api_key && $submissionId) {
             // Assign our private stylesheet, for front and back ends.
             $templateManager->addStyleSheet(
                 'wosReviewerLocator',
@@ -167,15 +168,14 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
                 ['contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
             );
             // Get the submission to retrieve its current stage ID
-            $submissionId = $params['workflowSubmissionId'];
-            $submission = Repo::submission()->get($submissionId);
+            $submission = Repo::submission()->get((int)$submissionId);
             $stageId = $submission ? $submission->getData('stageId') : null;
             // Pass simple configuration to JavaScript
             $config = '
                 window.wosReviewerLocatorConfig = {
                     apiKey: ' . json_encode($api_key) . ',
                     templateUrl: ' . json_encode($request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getTemplate', null, [
-                    'submissionId' => $params['workflowSubmissionId'],
+                    'submissionId' => $submissionId,
                     'stageId' => $stageId
                 ])) . ',
                     ready: true
