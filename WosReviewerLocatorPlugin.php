@@ -150,7 +150,8 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
         $template = $args[1];
         $params = $request->getQueryArray();
         $submissionId = isset($params['workflowSubmissionId']) ? $params['workflowSubmissionId'] : null;
-        if($this->getEnabled() && $template === 'dashboard/editors.tpl' && $api_key && $submissionId) {
+        // Load resources on dashboard page regardless of submission ID
+        if($this->getEnabled() && $template === 'dashboard/editors.tpl' && $api_key) {
             // Assign our private stylesheet, for front and back ends.
             $templateManager->addStyleSheet(
                 'wosReviewerLocator',
@@ -167,20 +168,34 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
                 $request->getBaseUrl() . '/' . $this->getPluginPath() . '/js/wosrl.js',
                 ['contexts' => ['backend'], 'priority' => TemplateManager::STYLE_SEQUENCE_LAST]
             );
-            // Get the submission to retrieve its current stage ID
-            $submission = Repo::submission()->get((int)$submissionId);
-            $stageId = $submission ? $submission->getData('stageId') : null;
-            // Pass simple configuration to JavaScript
-            $config = '
-                window.wosReviewerLocatorConfig = {
-                    apiKey: ' . json_encode($api_key) . ',
-                    templateUrl: ' . json_encode($request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getTemplate', null, [
-                    'submissionId' => $submissionId,
-                    'stageId' => $stageId
-                ])) . ',
-                    ready: true
-                };
-            ';
+
+            // Build configuration based on whether we have a submission ID
+            if ($submissionId) {
+                // Get the submission to retrieve its current stage ID
+                $submission = Repo::submission()->get((int)$submissionId);
+                $stageId = $submission ? $submission->getData('stageId') : null;
+                // Pass full configuration to JavaScript
+                $config = '
+                    window.wosReviewerLocatorConfig = {
+                        apiKey: ' . json_encode($api_key) . ',
+                        templateUrl: ' . json_encode($request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getTemplate', null, [
+                        'submissionId' => $submissionId,
+                        'stageId' => $stageId
+                    ])) . ',
+                        ready: true
+                    };
+                ';
+            } else {
+                // No submission ID yet - provide API key and base URL for JS to construct URLs
+                $baseUrl = $request->getDispatcher()->url($request, Application::ROUTE_PAGE, null, 'wosrl', 'getTemplate');
+                $config = '
+                    window.wosReviewerLocatorConfig = {
+                        apiKey: ' . json_encode($api_key) . ',
+                        baseTemplateUrl: ' . json_encode($baseUrl) . ',
+                        ready: true
+                    };
+                ';
+            }
             $templateManager->addJavaScript('wosReviewerLocatorConfig', $config, ['inline' => true, 'contexts' => ['backend']]);
         }
         return false;

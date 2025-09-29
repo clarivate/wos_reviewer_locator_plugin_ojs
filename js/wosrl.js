@@ -54,13 +54,17 @@
             return false; // Not ready yet
         }
         
-        // Check if config is available, create dynamically if needed
+        // Check if config is available
         if (!window.wosReviewerLocatorConfig || !window.wosReviewerLocatorConfig.ready) {
-            // Try to create config dynamically based on current URL
+            return false; // Config not loaded yet
+        }
+
+        // If we have config but no templateUrl, build it dynamically
+        if (!window.wosReviewerLocatorConfig.templateUrl) {
             const urlParams = new URLSearchParams(window.location.search);
             const submissionId = urlParams.get('workflowSubmissionId');
             const workflowMenuKey = urlParams.get('workflowMenuKey');
-            
+
             if (submissionId) {
                 // Extract stage ID from workflowMenuKey (format: workflow_3_1)
                 let stageId = null;
@@ -70,17 +74,22 @@
                         stageId = match[1]; // First number is usually stage ID
                     }
                 }
-                
-                // Create a basic config
-                const baseUrl = window.location.origin + window.location.pathname.replace(/\/dashboard\/editorial.*$/, '');
-                const templateUrl = baseUrl + '/wosrl/getTemplate?submissionId=' + submissionId + (stageId ? '&stageId=' + stageId : '');
-                
-                window.wosReviewerLocatorConfig = {
-                    templateUrl: templateUrl,
-                    ready: true
-                };
+
+                // Use the base URL provided by PHP if available
+                if (window.wosReviewerLocatorConfig.baseTemplateUrl) {
+                    const separator = window.wosReviewerLocatorConfig.baseTemplateUrl.includes('?') ? '&' : '?';
+                    const templateUrl = window.wosReviewerLocatorConfig.baseTemplateUrl +
+                        separator + 'submissionId=' + submissionId +
+                        (stageId ? '&stageId=' + stageId : '');
+                    window.wosReviewerLocatorConfig.templateUrl = templateUrl;
+                } else {
+                    // Fallback: try to construct URL (might not work correctly)
+                    const baseUrl = window.location.origin + window.location.pathname.replace(/\/dashboard\/editorial.*$/, '');
+                    const templateUrl = baseUrl + '/wosrl/getTemplate?submissionId=' + submissionId + (stageId ? '&stageId=' + stageId : '');
+                    window.wosReviewerLocatorConfig.templateUrl = templateUrl;
+                }
             } else {
-                return false;
+                return false; // No submission ID in URL
             }
         }
         
@@ -167,6 +176,10 @@
                 // Reset state and try injection
                 injectionSuccessful = false;
                 currentSubmissionId = null;
+                // Clear the cached template URL so it gets rebuilt for new submission
+                if (window.wosReviewerLocatorConfig) {
+                    delete window.wosReviewerLocatorConfig.templateUrl;
+                }
                 setTimeout(wosRLInit, 100);
             }
         }, 250);
