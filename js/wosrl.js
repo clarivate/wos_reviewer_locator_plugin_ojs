@@ -143,7 +143,7 @@
         });
     }
     
-    // Simple and efficient monitoring approach
+    // Monitor for DOM changes and URL navigation
     function wosRLMonitoring() {
         // Single MutationObserver to watch for DOM changes
         if (window.MutationObserver) {
@@ -198,6 +198,7 @@
 
 })();
 
+// Load and display the reviewer list from the API
 function wosRLList(page_url) {
     const wrapper = $('#wosRLGrid');
     $('a#wosRLSearch', wrapper.parent()).addClass('wosrl-hidden');
@@ -224,6 +225,7 @@ function wosRLList(page_url) {
     return false;
 }
 
+// Initialize pagination for the reviewer list
 function wosRLPagination() {
     let prev = { start: 0, stop: 10 };
     let content = $('#wosRLList > table > tbody > tr').not('.wosrl-conflict');
@@ -263,6 +265,7 @@ function wosRLPagination() {
     });
 }
 
+// Toggle visibility of conflict details for a reviewer
 function wosRLConflictToggle(element, id) {
     const target = $('tr[data-name=wosrl-conflict-' + id + ']', $(element).closest('#wosRLList'));
     $.when(target.toggle('display')).then(function() {
