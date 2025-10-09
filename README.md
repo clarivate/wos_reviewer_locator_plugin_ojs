@@ -9,7 +9,7 @@ You can read more about the Reviewer Locator here: https://clarivate.com/academi
 This plugin is licensed under the GNU General Public License v3.
 
 ### System Requirements
-- OJS 3.1 - 3.4 (work is underway to release support of 3.5)
+- OJS 3.1 - 3.5
 
 ### Installation
 Option #1 (from OJS plugin gallery)

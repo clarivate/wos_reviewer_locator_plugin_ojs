@@ -38,7 +38,7 @@ msgstr ""
 "<p>Once you have enabled the plugin, editors will be able to search for reviewers using Web of Science Reviewer Locator directly from the OJS system.</p>"
 
 msgid "plugins.generic.wosrl.grid.title"
-msgstr "Web of Science &trade; Reviewer Locator"
+msgstr "Web of Science&trade; Reviewer Locator"
 
 msgid "plugins.generic.wosrl.grid.search"
 msgstr "Search"
