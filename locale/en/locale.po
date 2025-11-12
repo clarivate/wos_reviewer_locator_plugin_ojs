@@ -24,6 +24,12 @@ msgstr "The API key for your account."
 msgid "plugins.generic.wosrl.settings.api_key_required"
 msgstr "Please ensure that your API key is correct."
 
+msgid "plugins.generic.wosrl.settings.api_key_validation_failed"
+msgstr "Unable to validate the API key. The API returned an unexpected response."
+
+msgid "plugins.generic.wosrl.settings.api_key_validation_error"
+msgstr "Error validating API key: {$error}"
+
 msgid "plugins.generic.wosrl.settings.nor"
 msgstr "Number of recommendations"
 

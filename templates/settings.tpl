@@ -34,7 +34,7 @@
                 </tr>
             </table>
         {/fbvFormArea}
+        <p>{translate key="plugins.generic.wosrl.settings.ps"}</p>
         {fbvFormButtons}
     </form>
 </div>
-<p>{translate key="plugins.generic.wosrl.settings.ps"}</p>
