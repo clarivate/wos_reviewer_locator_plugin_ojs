@@ -88,6 +88,21 @@ class wosRLHandler extends Handler
             $token = null;
         }
         $templateManager->assign('wosrl_token', $token);
+
+        // Get review round ID for the current stage
+        $reviewRoundId = null;
+        if (!empty($params['submissionId']) && !empty($params['stageId'])) {
+            $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+            $reviewRounds = $reviewRoundDao->getBySubmissionId($params['submissionId'], $params['stageId']);
+            $reviewRound = $reviewRounds->next();
+            if ($reviewRound) {
+                $reviewRoundId = $reviewRound->getId();
+            }
+        }
+        $templateManager->assign('reviewRoundId', $reviewRoundId);
+        $templateManager->assign('submissionId', $params['submissionId']);
+        $templateManager->assign('stageId', $params['stageId']);
+
         return $templateManager->fetch($plugin->getTemplateResource('grid.tpl'));
     }
 
@@ -201,6 +216,47 @@ class wosRLHandler extends Handler
                 return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
             }
         }
+
+        // Check if reviewers already exist in the system by email (single query)
+        if ($reviewers) {
+            // Collect all email addresses
+            $emailAddresses = [];
+            foreach ($reviewers as $reviewer) {
+                if (!empty($reviewer->contact->emails)) {
+                    foreach ($reviewer->contact->emails as $emailObj) {
+                        if (!empty($emailObj->email)) {
+                            $emailAddresses[] = strtolower($emailObj->email);
+                        }
+                    }
+                }
+            }
+
+            // Get all existing users with these emails in one query
+            $existingEmails = [];
+            if (!empty($emailAddresses)) {
+                $existingUsers = \Illuminate\Support\Facades\DB::table('users')
+                    ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), $emailAddresses)
+                    ->pluck('email');
+
+                foreach ($existingUsers as $email) {
+                    $existingEmails[] = strtolower($email);
+                }
+            }
+
+            // Mark reviewers that exist in system
+            foreach ($reviewers as $reviewer) {
+                $reviewer->existsInSystem = false;
+                if (!empty($reviewer->contact->emails)) {
+                    foreach ($reviewer->contact->emails as $emailObj) {
+                        if (!empty($emailObj->email) && in_array(strtolower($emailObj->email), $existingEmails)) {
+                            $reviewer->existsInSystem = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         // Return formatted list, or empty template
         $templateManager->assign('reviewers', $reviewers);
         return $templateManager->fetchJson($plugin->getTemplateResource($reviewers ? 'list.tpl' : 'empty.tpl'));

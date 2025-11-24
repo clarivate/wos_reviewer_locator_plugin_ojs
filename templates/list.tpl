@@ -7,6 +7,20 @@
  * Web of Science - Reviewer Locator plugin - list template
  *}
 
+<script type="text/javascript">
+    // Store reviewer data in JavaScript to avoid data attribute issues
+    window.wosReviewerData = [
+        {foreach $reviewers as $reviewer_index => $reviewer}
+        {ldelim}
+            firstName: {$reviewer->firstName|json_encode},
+            lastName: {$reviewer->lastName|json_encode},
+            email: {if $reviewer->contact->emails[0]}{$reviewer->contact->emails[0]->email|json_encode}{else}null{/if},
+            affiliation: {if $reviewer->recentOrganizations[0]}{$reviewer->recentOrganizations[0]->name|json_encode}{else}null{/if}
+            {rdelim}{if !$reviewer@last},{/if}
+        {/foreach}
+    ];
+</script>
+
 <div id="wosRLToolbar">
     <table>
         <tbody>
@@ -57,6 +71,13 @@
                             <span><a href="mailto:{$email->email}">{$email->email}</a></span>
                         {/foreach}
                     </div>
+                    {if !$reviewer->existsInSystem}
+                        <div style="padding-top: .5rem;">
+                            <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
+                                {translate key="plugins.generic.wosrl.list.add_reviewer"}
+                            </button>
+                        </div>
+                    {/if}
                     {if $reviewer->conflictOfInterestArticles || $reviewer->conflictOfInterestOrganizations}
                         <div class="wosrl-actions">
                             <button type="button" class="pkp_button" onclick="return wosRLConflictToggle(this, {$reviewer_index});"
