@@ -298,10 +298,14 @@ function wosRLAddReviewer(reviewerIndex) {
 
     // Construct URL for the create reviewer form
     const pathParts = window.location.pathname.split('/').filter(p => p);
-    const baseIndex = pathParts[0]; // index.php
-    const context = pathParts[1]; // journal path
+    let basePath = '/' + pathParts[0];
 
-    const formUrl = '/' + baseIndex + '/' + context +
+    // Check if index.php is in the URL
+    if (pathParts[0] === 'index.php') {
+        basePath = '/' + pathParts[0] + '/' + pathParts[1];
+    }
+
+    const formUrl = basePath +
         '/$$$call$$$/grid/users/reviewer/reviewer-grid/show-reviewer-form' +
         '?selectionType=2' +
         '&submissionId=' + submissionId +

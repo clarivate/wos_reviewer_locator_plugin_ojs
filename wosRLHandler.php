@@ -96,7 +96,11 @@ class wosRLHandler extends Handler
             $reviewRounds = $reviewRoundDao->getBySubmissionId($params['submissionId'], $params['stageId']);
             $reviewRound = $reviewRounds->next();
             if ($reviewRound) {
-                $reviewRoundId = $reviewRound->getId();
+                // Ensure we get the numeric ID, not a compound key
+                $reviewRoundId = (int) $reviewRound->getData('reviewRoundId');
+                if (!$reviewRoundId) {
+                    $reviewRoundId = (int) $reviewRound->getId();
+                }
             }
         }
         $templateManager->assign('reviewRoundId', $reviewRoundId);
