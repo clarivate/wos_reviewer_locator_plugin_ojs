@@ -236,25 +236,39 @@ class wosRLHandler extends Handler
             }
 
             // Get all existing users with these emails in one query
-            $existingEmails = [];
+            $existingUsersMap = [];
             if (!empty($emailAddresses)) {
                 $existingUsers = \Illuminate\Support\Facades\DB::table('users')
+                    ->select('user_id', 'email')
                     ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), $emailAddresses)
-                    ->pluck('email');
+                    ->get();
 
-                foreach ($existingUsers as $email) {
-                    $existingEmails[] = strtolower($email);
+                foreach ($existingUsers as $userRow) {
+                    $user = Repo::user()->get($userRow->user_id);
+                    if ($user) {
+                        $existingUsersMap[strtolower($userRow->email)] = [
+                            'userId' => $userRow->user_id,
+                            'fullName' => $user->getFullName()
+                        ];
+                    }
                 }
             }
 
-            // Mark reviewers that exist in system
+            // Mark reviewers that exist in system and store their user info
             foreach ($reviewers as $reviewer) {
                 $reviewer->existsInSystem = false;
+                $reviewer->existingUserId = null;
+                $reviewer->existingUserName = null;
                 if (!empty($reviewer->contact->emails)) {
                     foreach ($reviewer->contact->emails as $emailObj) {
-                        if (!empty($emailObj->email) && in_array(strtolower($emailObj->email), $existingEmails)) {
-                            $reviewer->existsInSystem = true;
-                            break;
+                        if (!empty($emailObj->email)) {
+                            $emailLower = strtolower($emailObj->email);
+                            if (isset($existingUsersMap[$emailLower])) {
+                                $reviewer->existsInSystem = true;
+                                $reviewer->existingUserId = $existingUsersMap[$emailLower]['userId'];
+                                $reviewer->existingUserName = $existingUsersMap[$emailLower]['fullName'];
+                                break;
+                            }
                         }
                     }
                 }

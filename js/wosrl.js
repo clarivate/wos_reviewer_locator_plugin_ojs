@@ -296,7 +296,7 @@ function wosRLAddReviewer(reviewerIndex) {
         return false;
     }
 
-    // Construct URL for the create reviewer form
+    // Construct URL for the reviewer form
     const pathParts = window.location.pathname.split('/').filter(p => p);
     let basePath = '/' + pathParts[0];
 
@@ -305,9 +305,13 @@ function wosRLAddReviewer(reviewerIndex) {
         basePath = '/' + pathParts[0] + '/' + pathParts[1];
     }
 
+    // Use selectionType=1 (Advanced Search) for existing reviewers
+    // Use selectionType=2 (Create New) for new reviewers
+    const selectionType = reviewerData.existsInSystem ? 1 : 2;
+
     const formUrl = basePath +
         '/$$$call$$$/grid/users/reviewer/reviewer-grid/show-reviewer-form' +
-        '?selectionType=2' +
+        '?selectionType=' + selectionType +
         '&submissionId=' + submissionId +
         '&stageId=' + stageId +
         '&reviewRoundId=' + reviewRoundId;
@@ -319,15 +323,67 @@ function wosRLAddReviewer(reviewerIndex) {
         url: formUrl
     });
 
-    // Wait for modal to load, then populate the form fields
-    setTimeout(function() {
-        wosRLPopulateReviewerForm(reviewerData);
-    }, 500);
+    // Wait for modal to load, then populate or select reviewer
+    if (reviewerData.existsInSystem) {
+        // For existing reviewers, call immediately - MutationObserver will wait for form
+        wosRLSelectExistingReviewer(reviewerData);
+    } else {
+        // For new reviewers, populate the create form
+        setTimeout(function() {
+            wosRLPopulateReviewerForm(reviewerData);
+        }, 500);
+    }
 
     return false;
 }
 
-// Populate the reviewer form with data
+// Trigger reviewer selection for existing reviewers using OJS event bus
+function wosRLSelectExistingReviewer(reviewerData) {
+    if (!reviewerData.existingUserId || !reviewerData.existingUserName) {
+        return;
+    }
+
+    const emitSelectionEvent = function() {
+        if (window.pkp && window.pkp.eventBus) {
+            window.pkp.eventBus.$emit('selected:reviewer', {
+                id: reviewerData.existingUserId,
+                fullName: reviewerData.existingUserName
+            });
+        }
+    };
+
+    // Check if form already exists
+    const $existingForm = $('#advancedReviewerSearch');
+    if ($existingForm.length > 0) {
+        // Form already exists, wait 100ms for handler to be ready
+        setTimeout(emitSelectionEvent, 100);
+        return;
+    }
+
+    // Use MutationObserver to wait for the form to be added to DOM
+    const observer = new MutationObserver(function(mutations, obs) {
+        const $advancedSearch = $('#advancedReviewerSearch');
+
+        if ($advancedSearch.length > 0) {
+            // Form found, stop observing and wait 100ms for handler initialization
+            obs.disconnect();
+            setTimeout(emitSelectionEvent, 100);
+        }
+    });
+
+    // Start observing the document body for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Failsafe: stop observing after 3 seconds if form never appears
+    setTimeout(function() {
+        observer.disconnect();
+    }, 3000);
+}
+
+// Populate the reviewer form with data (for new reviewers)
 function wosRLPopulateReviewerForm(reviewerData) {
     // Find the form (might be in a dialog)
     const $form = $('#createReviewerForm');
@@ -372,3 +428,7 @@ function wosRLPopulateReviewerForm(reviewerData) {
         }, 300);
     }
 }
+
+// Note: Auto-refreshing the Reviewers list above is not possible without modifying core OJS files
+// The reviewer list is a Vue 3 component that we cannot reload from the plugin
+// Users will need to manually refresh the page to see newly added reviewers in the list

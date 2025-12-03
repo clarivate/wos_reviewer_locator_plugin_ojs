@@ -15,7 +15,10 @@
             firstName: {$reviewer->firstName|json_encode},
             lastName: {$reviewer->lastName|json_encode},
             email: {if $reviewer->contact->emails[0]}{$reviewer->contact->emails[0]->email|json_encode}{else}null{/if},
-            affiliation: {if $reviewer->recentOrganizations[0]}{$reviewer->recentOrganizations[0]->name|json_encode}{else}null{/if}
+            affiliation: {if $reviewer->recentOrganizations[0]}{$reviewer->recentOrganizations[0]->name|json_encode}{else}null{/if},
+            existsInSystem: {if $reviewer->existsInSystem}true{else}false{/if},
+            existingUserId: {if $reviewer->existingUserId}{$reviewer->existingUserId}{else}null{/if},
+            existingUserName: {if $reviewer->existingUserName}{$reviewer->existingUserName|json_encode}{else}null{/if}
             {rdelim}{if !$reviewer@last},{/if}
         {/foreach}
     ];
@@ -71,13 +74,11 @@
                             <span><a href="mailto:{$email->email}">{$email->email}</a></span>
                         {/foreach}
                     </div>
-                    {if !$reviewer->existsInSystem}
-                        <div style="padding-top: .5rem;">
-                            <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
-                                {translate key="plugins.generic.wosrl.list.add_reviewer"}
-                            </button>
-                        </div>
-                    {/if}
+                    <div style="padding-top: .5rem;">
+                        <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
+                            {translate key="plugins.generic.wosrl.list.add_reviewer"}
+                        </button>
+                    </div>
                     {if $reviewer->conflictOfInterestArticles || $reviewer->conflictOfInterestOrganizations}
                         <div class="wosrl-actions">
                             <button type="button" class="pkp_button" onclick="return wosRLConflictToggle(this, {$reviewer_index});"
