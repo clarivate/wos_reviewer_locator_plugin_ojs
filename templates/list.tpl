@@ -7,6 +7,24 @@
  * Web of Science - Reviewer Locator plugin - list template
  *}
 
+<script type="text/javascript">
+    // Store reviewer data in JavaScript to avoid data attribute issues
+    window.wosReviewerData = [
+        {foreach $reviewers as $reviewer_index => $reviewer}
+        {ldelim}
+            firstName: {$reviewer->firstName|json_encode},
+            lastName: {$reviewer->lastName|json_encode},
+            email: {if $reviewer->contact->emails[0]}{$reviewer->contact->emails[0]->email|json_encode}{else}null{/if},
+            affiliation: {if $reviewer->recentOrganizations[0]}{$reviewer->recentOrganizations[0]->name|json_encode}{else}null{/if},
+            existsInSystem: {if $reviewer->existsInSystem}true{else}false{/if},
+            existingUserId: {if $reviewer->existingUserId}{$reviewer->existingUserId}{else}null{/if},
+            existingUserName: {if $reviewer->existingUserName}{$reviewer->existingUserName|json_encode}{else}null{/if},
+            isAlreadyAssignedToSubmission: {if $reviewer->isAlreadyAssignedToSubmission}true{else}false{/if}
+            {rdelim}{if !$reviewer@last},{/if}
+        {/foreach}
+    ];
+</script>
+
 <div id="wosRLToolbar">
     <table>
         <tbody>
@@ -56,6 +74,15 @@
                         {foreach $reviewer->contact->emails as $email}
                             <span><a href="mailto:{$email->email}">{$email->email}</a></span>
                         {/foreach}
+                    </div>
+                    <div style="padding-top: .5rem;">
+                        {if $reviewer->isAlreadyAssignedToSubmission}
+                            <span class="wosrl-already-assigned">{translate key="plugins.generic.wosrl.list.already_assigned"}</span>
+                        {else}
+                            <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
+                                {translate key="plugins.generic.wosrl.list.add_reviewer"}
+                            </button>
+                        {/if}
                     </div>
                     {if $reviewer->conflictOfInterestArticles || $reviewer->conflictOfInterestOrganizations}
                         <div class="wosrl-actions">

@@ -103,5 +103,11 @@ msgstr "Peer Review Experience"
 msgid "plugins.generic.wosrl.list.reviews"
 msgstr "Reviews"
 
+msgid "plugins.generic.wosrl.list.add_reviewer"
+msgstr "Add Reviewer"
+
+msgid "plugins.generic.wosrl.list.already_assigned"
+msgstr "Already assigned"
+
 msgid "plugins.generic.wosrl.error.general"
 msgstr "Failed request or invalid JSON returned."

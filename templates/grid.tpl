@@ -7,7 +7,7 @@
  * Web of Science - Reviewer Locator plugin - grid template
  *}
 
-<div class="pkp_controllers_grid" data-page-url="{$page_url}" data-has-token="{if $wosrl_token}true{else}false{/if}">
+<div class="pkp_controllers_grid" data-page-url="{$page_url}" data-has-token="{if $wosrl_token}true{else}false{/if}" data-submission-id="{$submissionId}" data-stage-id="{$stageId}" data-review-round-id="{$reviewRoundId}">
     <div id="wosRLHeader" class="header">
         <h4>{translate key="plugins.generic.wosrl.grid.title"}</h4>
         <ul class="actions">

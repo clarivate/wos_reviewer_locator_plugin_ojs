@@ -9,7 +9,7 @@
  */
 
 (function() {
-    
+
     // Track injection state and current submission ID
     let injectionSuccessful = false;
     let currentSubmissionId = null;
@@ -19,24 +19,24 @@
     function wosRLInit() {
         // Check if we're on the editorial workflow page
         const currentUrl = window.location.href;
-        
+
         if (!currentUrl.includes('dashboard/editorial')) {
             return false;
         }
-        
+
         // Extract submission ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const workflowSubmissionId = urlParams.get('workflowSubmissionId');
-        
+
         if (!workflowSubmissionId) {
             return false; // Not on a submission workflow page
         }
-        
+
         // Check if already injected for this submission
         if (injectionSuccessful && currentSubmissionId === workflowSubmissionId) {
             return true;
         }
-        
+
         // Reset state if this is a different submission
         if (currentSubmissionId !== workflowSubmissionId) {
             injectionSuccessful = false;
@@ -47,13 +47,13 @@
                 existingContainer.remove();
             }
         }
-        
+
         // Find reviewer-manager element
         const reviewerManagerElement = document.querySelector('[data-cy="reviewer-manager"]');
         if (!reviewerManagerElement) {
             return false; // Not ready yet
         }
-        
+
         // Check if config is available
         if (!window.wosReviewerLocatorConfig || !window.wosReviewerLocatorConfig.ready) {
             return false; // Config not loaded yet
@@ -92,20 +92,20 @@
                 return false; // No submission ID in URL
             }
         }
-        
+
         // Inject the plugin UI
         const wosContainer = document.createElement('div');
         wosContainer.id = 'wosReviewerLocator';
-        
+
         // Insert after reviewer-manager
         if (reviewerManagerElement.nextSibling) {
             reviewerManagerElement.parentNode.insertBefore(wosContainer, reviewerManagerElement.nextSibling);
         } else {
             reviewerManagerElement.parentNode.appendChild(wosContainer);
         }
-        
+
         wosRLTemplate();
-        
+
         // Mark as successfully injected
         injectionSuccessful = true;
         return true;
@@ -120,7 +120,7 @@
         }).then(response => response.text()).then(htmlContent => {
             // Just load the HTML content directly without any processing
             contentDiv.innerHTML = htmlContent;
-            
+
             // Initialize the toggle functionality after template is loaded
             const wrapper = $('#wosRLHeader');
             $('a.wosrl-toggle', wrapper).on('click', function() {
@@ -129,12 +129,12 @@
                 $('#wosRLGrid').toggleClass('pkp_helpers_display_none');
                 return false;
             });
-            
+
             // Check if we have a token and should load the list immediately
             const gridContainer = $('.pkp_controllers_grid', contentDiv);
             const hasToken = gridContainer.data('has-token') === 'true' || gridContainer.data('has-token') === true;
             const pageUrl = gridContainer.data('page-url');
-            
+
             if (hasToken && pageUrl) {
                 wosRLList(pageUrl);
             }
@@ -142,7 +142,7 @@
             contentDiv.innerHTML = '<div class="wosrl-error">Error loading template</div>';
         });
     }
-    
+
     // Monitor for DOM changes and URL navigation
     function wosRLMonitoring() {
         // Single MutationObserver to watch for DOM changes
@@ -153,7 +153,7 @@
                     wosRLInit();
                 }
             });
-            
+
             // Start observing when body is ready
             if (document.body) {
                 observer.observe(document.body, {
@@ -166,7 +166,7 @@
                 return;
             }
         }
-        
+
         // Simple URL monitoring for navigation
         let lastUrl = window.location.href;
         setInterval(function() {
@@ -184,7 +184,7 @@
             }
         }, 250);
     }
-    
+
     // Initial setup
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
@@ -273,4 +273,158 @@ function wosRLConflictToggle(element, id) {
         $(element).html('<b>!</b> ' + text);
     });
     return false;
+}
+
+// Open Create Reviewer modal
+function wosRLAddReviewer(reviewerIndex) {
+    // Get reviewer data from global array
+    if (!window.wosReviewerData || !window.wosReviewerData[reviewerIndex]) {
+        alert('Unable to load reviewer data');
+        return false;
+    }
+
+    const reviewerData = window.wosReviewerData[reviewerIndex];
+
+    // Get submission context from the grid container
+    const gridContainer = $('.pkp_controllers_grid', '#wosReviewerLocator');
+    const submissionId = gridContainer.data('submission-id');
+    const stageId = gridContainer.data('stage-id');
+    const reviewRoundId = gridContainer.data('review-round-id');
+
+    if (!submissionId || !stageId || !reviewRoundId) {
+        alert('Unable to determine submission context');
+        return false;
+    }
+
+    // Construct URL for the reviewer form
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    let basePath = '/' + pathParts[0];
+
+    // Check if index.php is in the URL
+    if (pathParts[0] === 'index.php') {
+        basePath = '/' + pathParts[0] + '/' + pathParts[1];
+    }
+
+    // Use selectionType=1 (Advanced Search) for existing reviewers
+    // Use selectionType=2 (Create New) for new reviewers
+    const selectionType = reviewerData.existsInSystem ? 1 : 2;
+
+    const formUrl = basePath +
+        '/$$$call$$$/grid/users/reviewer/reviewer-grid/show-reviewer-form' +
+        '?selectionType=' + selectionType +
+        '&submissionId=' + submissionId +
+        '&stageId=' + stageId +
+        '&reviewRoundId=' + reviewRoundId;
+
+    // Open modal using OJS's native modal handler
+    var $modal = $('<div>');
+    $modal.pkpHandler('$.pkp.controllers.modal.AjaxModalHandler', {
+        title: 'Add Reviewer',
+        url: formUrl
+    });
+
+    // Wait for modal to load, then populate or select reviewer
+    if (reviewerData.existsInSystem) {
+        // For existing reviewers, call immediately - MutationObserver will wait for form
+        wosRLSelectExistingReviewer(reviewerData);
+    } else {
+        // For new reviewers, populate the create form
+        setTimeout(function() {
+            wosRLPopulateReviewerForm(reviewerData);
+        }, 500);
+    }
+
+    return false;
+}
+
+// Trigger reviewer selection for existing reviewers using OJS event bus
+function wosRLSelectExistingReviewer(reviewerData) {
+    if (!reviewerData.existingUserId || !reviewerData.existingUserName) {
+        return;
+    }
+
+    const emitSelectionEvent = function() {
+        if (window.pkp && window.pkp.eventBus) {
+            window.pkp.eventBus.$emit('selected:reviewer', {
+                id: reviewerData.existingUserId,
+                fullName: reviewerData.existingUserName
+            });
+        }
+    };
+
+    // Check if form already exists
+    const $existingForm = $('#advancedReviewerSearch');
+    if ($existingForm.length > 0) {
+        // Form already exists, wait 100ms for handler to be ready
+        setTimeout(emitSelectionEvent, 100);
+        return;
+    }
+
+    // Use MutationObserver to wait for the form to be added to DOM
+    const observer = new MutationObserver(function(mutations, obs) {
+        const $advancedSearch = $('#advancedReviewerSearch');
+
+        if ($advancedSearch.length > 0) {
+            // Form found, stop observing and wait 100ms for handler initialization
+            obs.disconnect();
+            setTimeout(emitSelectionEvent, 100);
+        }
+    });
+
+    // Start observing the document body for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Failsafe: stop observing after 3 seconds if form never appears
+    setTimeout(function() {
+        observer.disconnect();
+    }, 3000);
+}
+
+// Populate the reviewer form with data (for new reviewers)
+function wosRLPopulateReviewerForm(reviewerData) {
+    // Find the form (might be in a dialog)
+    const $form = $('#createReviewerForm');
+
+    if (!$form.length) {
+        setTimeout(function() {
+            wosRLPopulateReviewerForm(reviewerData);
+        }, 200);
+        return;
+    }
+
+    // Get the site primary locale from the form
+    const primaryLocale = $form.find('input[name="sitePrimaryLocale"]').val() || 'en';
+
+    // Populate given name (first name)
+    if (reviewerData.firstName) {
+        $form.find('input[name="givenName[' + primaryLocale + ']"]').val(reviewerData.firstName);
+    }
+
+    // Populate family name (last name)
+    if (reviewerData.lastName) {
+        $form.find('input[name="familyName[' + primaryLocale + ']"]').val(reviewerData.lastName);
+    }
+
+    // Populate email
+    if (reviewerData.email) {
+        $form.find('input[name="email"]').val(reviewerData.email);
+    }
+
+    // Populate affiliation
+    if (reviewerData.affiliation) {
+        $form.find('input[name="affiliation[' + primaryLocale + ']"]').val(reviewerData.affiliation);
+    }
+
+    // Trigger username suggestion if we have name data
+    if (reviewerData.firstName || reviewerData.lastName) {
+        setTimeout(function() {
+            const $suggestButton = $('#suggestUsernameButton');
+            if ($suggestButton.length) {
+                $suggestButton.trigger('click');
+            }
+        }, 300);
+    }
 }

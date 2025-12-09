@@ -88,6 +88,25 @@ class wosRLHandler extends Handler
             $token = null;
         }
         $templateManager->assign('wosrl_token', $token);
+
+        // Get review round ID for the current stage
+        $reviewRoundId = null;
+        if (!empty($params['submissionId']) && !empty($params['stageId'])) {
+            $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+            $reviewRounds = $reviewRoundDao->getBySubmissionId($params['submissionId'], $params['stageId']);
+            $reviewRound = $reviewRounds->next();
+            if ($reviewRound) {
+                // Ensure we get the numeric ID, not a compound key
+                $reviewRoundId = (int) $reviewRound->getData('reviewRoundId');
+                if (!$reviewRoundId) {
+                    $reviewRoundId = (int) $reviewRound->getId();
+                }
+            }
+        }
+        $templateManager->assign('reviewRoundId', $reviewRoundId);
+        $templateManager->assign('submissionId', $params['submissionId']);
+        $templateManager->assign('stageId', $params['stageId']);
+
         return $templateManager->fetch($plugin->getTemplateResource('grid.tpl'));
     }
 
@@ -201,6 +220,83 @@ class wosRLHandler extends Handler
                 return new JSONMessage(false, Locale::get('plugins.generic.wosrl.error.general'));
             }
         }
+
+        // Check if reviewers already exist in the system by email (single query)
+        if ($reviewers) {
+            // Collect all email addresses
+            $emailAddresses = [];
+            foreach ($reviewers as $reviewer) {
+                if (!empty($reviewer->contact->emails)) {
+                    foreach ($reviewer->contact->emails as $emailObj) {
+                        if (!empty($emailObj->email)) {
+                            $emailAddresses[] = strtolower($emailObj->email);
+                        }
+                    }
+                }
+            }
+
+            // Get all existing users with these emails in one query
+            $existingUsersMap = [];
+            if (!empty($emailAddresses)) {
+                $existingUsers = \Illuminate\Support\Facades\DB::table('users')
+                    ->select('user_id', 'email')
+                    ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(email)'), $emailAddresses)
+                    ->get();
+
+                foreach ($existingUsers as $userRow) {
+                    $user = Repo::user()->get($userRow->user_id);
+                    if ($user) {
+                        $existingUsersMap[strtolower($userRow->email)] = [
+                            'userId' => $userRow->user_id,
+                            'fullName' => $user->getFullName()
+                        ];
+                    }
+                }
+            }
+
+            // Mark reviewers that exist in system and store their user info
+            foreach ($reviewers as $reviewer) {
+                $reviewer->existsInSystem = false;
+                $reviewer->existingUserId = null;
+                $reviewer->existingUserName = null;
+                if (!empty($reviewer->contact->emails)) {
+                    foreach ($reviewer->contact->emails as $emailObj) {
+                        if (!empty($emailObj->email)) {
+                            $emailLower = strtolower($emailObj->email);
+                            if (isset($existingUsersMap[$emailLower])) {
+                                $reviewer->existsInSystem = true;
+                                $reviewer->existingUserId = $existingUsersMap[$emailLower]['userId'];
+                                $reviewer->existingUserName = $existingUsersMap[$emailLower]['fullName'];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check which existing users are already assigned as reviewers to this submission (single query)
+            $existingUserIds = array_filter(array_map(function($r) {
+                return $r->existingUserId ?? null;
+            }, (array)$reviewers));
+
+            $assignedUserIds = [];
+            if (!empty($existingUserIds)) {
+                $assignments = Repo::reviewAssignment()->getCollector()
+                    ->filterBySubmissionIds([$submission_id])
+                    ->filterByReviewerIds($existingUserIds)
+                    ->getMany();
+
+                foreach ($assignments as $assignment) {
+                    $assignedUserIds[$assignment->getReviewerId()] = true;
+                }
+            }
+
+            // Mark reviewers that are already assigned to this submission
+            foreach ($reviewers as $reviewer) {
+                $reviewer->isAlreadyAssignedToSubmission = isset($assignedUserIds[$reviewer->existingUserId ?? null]);
+            }
+        }
+
         // Return formatted list, or empty template
         $templateManager->assign('reviewers', $reviewers);
         return $templateManager->fetchJson($plugin->getTemplateResource($reviewers ? 'list.tpl' : 'empty.tpl'));
