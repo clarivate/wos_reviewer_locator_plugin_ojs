@@ -428,7 +428,3 @@ function wosRLPopulateReviewerForm(reviewerData) {
         }, 300);
     }
 }
-
-// Note: Auto-refreshing the Reviewers list above is not possible without modifying core OJS files
-// The reviewer list is a Vue 3 component that we cannot reload from the plugin
-// Users will need to manually refresh the page to see newly added reviewers in the list

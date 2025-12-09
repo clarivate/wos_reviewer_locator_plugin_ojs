@@ -273,6 +273,28 @@ class wosRLHandler extends Handler
                     }
                 }
             }
+
+            // Check which existing users are already assigned as reviewers to this submission (single query)
+            $existingUserIds = array_filter(array_map(function($r) {
+                return $r->existingUserId ?? null;
+            }, (array)$reviewers));
+
+            $assignedUserIds = [];
+            if (!empty($existingUserIds)) {
+                $assignments = Repo::reviewAssignment()->getCollector()
+                    ->filterBySubmissionIds([$submission_id])
+                    ->filterByReviewerIds($existingUserIds)
+                    ->getMany();
+
+                foreach ($assignments as $assignment) {
+                    $assignedUserIds[$assignment->getReviewerId()] = true;
+                }
+            }
+
+            // Mark reviewers that are already assigned to this submission
+            foreach ($reviewers as $reviewer) {
+                $reviewer->isAlreadyAssignedToSubmission = isset($assignedUserIds[$reviewer->existingUserId ?? null]);
+            }
         }
 
         // Return formatted list, or empty template

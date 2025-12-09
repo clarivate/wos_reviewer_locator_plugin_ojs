@@ -18,7 +18,8 @@
             affiliation: {if $reviewer->recentOrganizations[0]}{$reviewer->recentOrganizations[0]->name|json_encode}{else}null{/if},
             existsInSystem: {if $reviewer->existsInSystem}true{else}false{/if},
             existingUserId: {if $reviewer->existingUserId}{$reviewer->existingUserId}{else}null{/if},
-            existingUserName: {if $reviewer->existingUserName}{$reviewer->existingUserName|json_encode}{else}null{/if}
+            existingUserName: {if $reviewer->existingUserName}{$reviewer->existingUserName|json_encode}{else}null{/if},
+            isAlreadyAssignedToSubmission: {if $reviewer->isAlreadyAssignedToSubmission}true{else}false{/if}
             {rdelim}{if !$reviewer@last},{/if}
         {/foreach}
     ];
@@ -75,9 +76,13 @@
                         {/foreach}
                     </div>
                     <div style="padding-top: .5rem;">
-                        <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
-                            {translate key="plugins.generic.wosrl.list.add_reviewer"}
-                        </button>
+                        {if $reviewer->isAlreadyAssignedToSubmission}
+                            <span class="wosrl-already-assigned">{translate key="plugins.generic.wosrl.list.already_assigned"}</span>
+                        {else}
+                            <button type="button" class="pkp_button" onclick="wosRLAddReviewer({$reviewer_index})">
+                                {translate key="plugins.generic.wosrl.list.add_reviewer"}
+                            </button>
+                        {/if}
                     </div>
                     {if $reviewer->conflictOfInterestArticles || $reviewer->conflictOfInterestOrganizations}
                         <div class="wosrl-actions">
