@@ -245,3 +245,13 @@
 .wosrl-hidden {
     display: none !important;
 }
+
+.wosrl-already-assigned {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #666;
+    background-color: #f0f0f0;
+    border-radius: 3px;
+}

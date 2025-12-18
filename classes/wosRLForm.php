@@ -66,6 +66,63 @@ class wosRLForm extends Form {
     }
 
     /**
+     * @see Form::validate()
+     */
+    function validate($callHooks = true): bool {
+        // Run parent validation (required fields, CSRF, etc.)
+        if (!parent::validate($callHooks)) {
+            return false;
+        }
+
+        // Validate API key by making a test call to the API
+        $apiKey = $this->getData('api_key');
+        if (!empty($apiKey)) {
+            $httpClient = Application::get()->getHttpClient();
+            $testUrl = 'https://api.clarivate.com/api/wosrl/1/';
+            $headers = [
+                'X-ApiKey' => $apiKey,
+                'Content-Type' => 'application/json'
+            ];
+
+            try {
+                // Make test request with http_errors = false to handle status codes manually
+                // 404: Valid API key (token 1 does not exist)
+                // 401: Invalid API key
+                $response = $httpClient->request('GET', $testUrl, [
+                    'headers' => $headers,
+                    'http_errors' => false
+                ]);
+
+                $statusCode = $response->getStatusCode();
+
+                // 404 means the API key is valid (the test token does not exist, which is expected)
+                if ($statusCode === 404) {
+                    return true;
+                }
+
+                // 401 means invalid API key or authentication error
+                if ($statusCode === 401) {
+                    $this->addError('api_key', __('plugins.generic.wosrl.settings.api_key_required'));
+                    $this->addErrorField('api_key');
+                    return false;
+                }
+
+                // Any other status code is unexpected
+                $this->addError('api_key', __('plugins.generic.wosrl.settings.api_key_validation_failed'));
+                $this->addErrorField('api_key');
+                return false;
+
+            } catch (Exception $e) {
+                // Network error or other exception
+                $this->addError('api_key', __('plugins.generic.wosrl.settings.api_key_validation_error', ['error' => $e->getMessage()]));
+                $this->addErrorField('api_key');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Fetch the form
      *
      * @copydoc Form::fetch()

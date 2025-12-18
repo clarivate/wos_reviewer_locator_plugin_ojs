@@ -81,3 +81,195 @@ function wosRLConflictToggle(element, id) {
     });
     return false;
 }
+
+// Open Create Reviewer modal
+function wosRLAddReviewer(reviewerIndex) {
+    // Check if jQuery and pkpHandler are available
+    if (typeof $ === 'undefined' || typeof $.fn.pkpHandler === 'undefined') {
+        return false;
+    }
+
+    // Get reviewer data from global array
+    if (!window.wosReviewerData || !window.wosReviewerData[reviewerIndex]) {
+        return false;
+    }
+
+    const reviewerData = window.wosReviewerData[reviewerIndex];
+
+    // Get submission context from the grid container
+    const gridContainer = $('.pkp_controllers_grid').filter(function() {
+        return $(this).find('#wosRLHeader').length > 0;
+    });
+
+    if (gridContainer.length === 0) {
+        return false;
+    }
+
+    const submissionId = gridContainer.data('submission-id');
+    const stageId = gridContainer.data('stage-id');
+    const reviewRoundId = gridContainer.data('review-round-id');
+
+    if (!submissionId || !stageId || !reviewRoundId) {
+        return false;
+    }
+
+    // Construct URL for the reviewer form - use the same pattern as OJS native buttons
+    // Look for an existing Add Reviewer button to get the correct URL format
+    const existingAddReviewerBtn = $('a[id*="addReviewer"]').first();
+    let formUrl;
+
+    if (existingAddReviewerBtn.length > 0) {
+        // Try to extract the base URL from existing button's handler
+        const handler = $.pkp.classes.Handler.getHandler(existingAddReviewerBtn);
+        if (handler && handler.linkActionRequest_ && handler.linkActionRequest_.getUrl) {
+            // Get base URL and modify selection type
+            const baseUrl = handler.linkActionRequest_.getUrl();
+            const selectionType = reviewerData.existsInSystem ? 1 : 2;
+            formUrl = baseUrl.replace(/selectionType=\d+/, 'selectionType=' + selectionType);
+            if (formUrl === baseUrl) {
+                // selectionType wasn't in URL, add it
+                formUrl = baseUrl + (baseUrl.indexOf('?') > -1 ? '&' : '?') + 'selectionType=' + selectionType;
+            }
+        }
+    }
+
+    if (!formUrl) {
+        // Fallback: construct URL manually
+        const pathParts = window.location.pathname.split('/').filter(p => p);
+        let basePath = '/' + pathParts[0];
+
+        // Check if index.php is in the URL
+        if (pathParts[0] === 'index.php') {
+            basePath = '/' + pathParts[0] + '/' + pathParts[1];
+        }
+
+        // Use selectionType=1 (Advanced Search) for existing reviewers
+        // Use selectionType=2 (Create New) for new reviewers
+        const selectionType = reviewerData.existsInSystem ? 1 : 2;
+
+        formUrl = basePath +
+            '/$$$call$$$/grid/users/reviewer/reviewer-grid/show-reviewer-form' +
+            '?selectionType=' + selectionType +
+            '&submissionId=' + submissionId +
+            '&stageId=' + stageId +
+            '&reviewRoundId=' + reviewRoundId;
+    }
+
+    // Generate unique ID for modal
+    const modalId = 'wosrl-modal-' + Date.now();
+
+    // Open modal using OJS's native modal handler pattern
+    var $modal = $('<div id="' + modalId + '" class="pkp_modal pkpModalWrapper" tabindex="-1"></div>');
+    $modal.pkpHandler('$.pkp.controllers.modal.AjaxModalHandler', {
+        modalHandler: '$.pkp.controllers.modal.AjaxModalHandler',
+        title: 'Add Reviewer',
+        url: formUrl,
+        canClose: '1',
+        closeButtonText: 'Close'
+    });
+
+    // Wait for modal to load, then populate or select reviewer
+    if (reviewerData.existsInSystem) {
+        // For existing reviewers, call immediately - MutationObserver will wait for form
+        wosRLSelectExistingReviewer(reviewerData);
+    } else {
+        // For new reviewers, populate the create form
+        setTimeout(function() {
+            wosRLPopulateReviewerForm(reviewerData);
+        }, 500);
+    }
+
+    return false;
+}
+
+// Trigger reviewer selection for existing reviewers using OJS event bus
+function wosRLSelectExistingReviewer(reviewerData) {
+    if (!reviewerData.existingUserId || !reviewerData.existingUserName) {
+        return;
+    }
+
+    const emitSelectionEvent = function() {
+        if (window.pkp && window.pkp.eventBus) {
+            window.pkp.eventBus.$emit('selected:reviewer', {
+                id: reviewerData.existingUserId,
+                fullName: reviewerData.existingUserName
+            });
+        }
+    };
+
+    // Check if form already exists
+    const $existingForm = $('#advancedReviewerSearch');
+    if ($existingForm.length > 0) {
+        // Form already exists, wait 100ms for handler to be ready
+        setTimeout(emitSelectionEvent, 100);
+        return;
+    }
+
+    // Use MutationObserver to wait for the form to be added to DOM
+    const observer = new MutationObserver(function(mutations, obs) {
+        const $advancedSearch = $('#advancedReviewerSearch');
+
+        if ($advancedSearch.length > 0) {
+            // Form found, stop observing and wait 100ms for handler initialization
+            obs.disconnect();
+            setTimeout(emitSelectionEvent, 100);
+        }
+    });
+
+    // Start observing the document body for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Failsafe: stop observing after 3 seconds if form never appears
+    setTimeout(function() {
+        observer.disconnect();
+    }, 3000);
+}
+
+// Populate the reviewer form with data (for new reviewers)
+function wosRLPopulateReviewerForm(reviewerData) {
+    // Find the form (might be in a dialog)
+    const $form = $('#createReviewerForm');
+
+    if (!$form.length) {
+        setTimeout(function() {
+            wosRLPopulateReviewerForm(reviewerData);
+        }, 200);
+        return;
+    }
+
+    // Get the site primary locale from the form
+    const primaryLocale = $form.find('input[name="sitePrimaryLocale"]').val() || 'en';
+
+    // Populate given name (first name)
+    if (reviewerData.firstName) {
+        $form.find('input[name="givenName[' + primaryLocale + ']"]').val(reviewerData.firstName);
+    }
+
+    // Populate family name (last name)
+    if (reviewerData.lastName) {
+        $form.find('input[name="familyName[' + primaryLocale + ']"]').val(reviewerData.lastName);
+    }
+
+    // Populate email
+    if (reviewerData.email) {
+        $form.find('input[name="email"]').val(reviewerData.email);
+    }
+
+    // Populate affiliation
+    if (reviewerData.affiliation) {
+        $form.find('input[name="affiliation[' + primaryLocale + ']"]').val(reviewerData.affiliation);
+    }
+
+    // Trigger username suggestion if we have name data
+    if (reviewerData.firstName || reviewerData.lastName) {
+        setTimeout(function() {
+            const $suggestButton = $('#suggestUsernameButton');
+            if ($suggestButton.length) {
+                $suggestButton.trigger('click');
+            }
+        }, 300);
+    }
+}

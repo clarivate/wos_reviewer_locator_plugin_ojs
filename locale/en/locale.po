@@ -24,6 +24,12 @@ msgstr "The API key for your account."
 msgid "plugins.generic.wosrl.settings.api_key_required"
 msgstr "Please ensure that your API key is correct."
 
+msgid "plugins.generic.wosrl.settings.api_key_validation_failed"
+msgstr "Unable to validate the API key. The API returned an unexpected response."
+
+msgid "plugins.generic.wosrl.settings.api_key_validation_error"
+msgstr "Error validating API key: {$error}"
+
 msgid "plugins.generic.wosrl.settings.nor"
 msgstr "Number of recommendations"
 
@@ -96,6 +102,12 @@ msgstr "Peer Review Experience"
 
 msgid "plugins.generic.wosrl.list.reviews"
 msgstr "Reviews"
+
+msgid "plugins.generic.wosrl.list.add_reviewer"
+msgstr "Add Reviewer"
+
+msgid "plugins.generic.wosrl.list.already_assigned"
+msgstr "Already assigned"
 
 msgid "plugins.generic.wosrl.error.general"
 msgstr "Failed request or invalid JSON returned."

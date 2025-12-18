@@ -17,6 +17,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\plugins\PluginRegistry;
 use PKP\db\DAO;
+use PKP\db\DAORegistry;
 
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLForm;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLMigration;
@@ -196,6 +197,21 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
                 $token = null;
             }
             $templateManager->assign('wosrl_token', $token);
+
+            // Get review round ID for the current stage
+            $reviewRoundId = null;
+            if (!empty($args['submissionId']) && !empty($args['stageId'])) {
+                $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+                $reviewRounds = $reviewRoundDao->getBySubmissionId($args['submissionId'], $args['stageId']);
+                $reviewRound = $reviewRounds->next();
+                if ($reviewRound) {
+                    $reviewRoundId = (int) $reviewRound->getId();
+                }
+            }
+            $templateManager->assign('reviewRoundId', $reviewRoundId);
+            $templateManager->assign('submissionId', $args['submissionId']);
+            $templateManager->assign('stageId', $args['stageId']);
+
             $output .= $templateManager->fetch($plugin->getTemplateResource('grid.tpl'));
         }
         $templateManager->unregisterFilter('output', 'reviewPageFilter');

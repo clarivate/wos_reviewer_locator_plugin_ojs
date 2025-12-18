@@ -7,7 +7,7 @@
  * Web of Science - Reviewer Locator plugin - grid template
  *}
 
-<div class="pkp_controllers_grid">
+<div class="pkp_controllers_grid" data-submission-id="{$submissionId}" data-stage-id="{$stageId}" data-review-round-id="{$reviewRoundId}">
     <div id="wosRLHeader" class="header">
         <h4>{translate key="plugins.generic.wosrl.grid.title"}</h4>
         <ul class="actions">
