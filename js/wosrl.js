@@ -56,7 +56,7 @@
 
         // Check if config is available
         if (!window.wosReviewerLocatorConfig || !window.wosReviewerLocatorConfig.ready) {
-            return false; // Config not loaded yet
+            return false; // Config not loaded yet or user not authorized
         }
 
         // If we have config but no templateUrl, build it dynamically
