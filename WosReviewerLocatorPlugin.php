@@ -151,7 +151,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
 
         $isAuthorized = false;
         if ($user && $journalId) {
-            $isAuthorized = $user->hasRole([Role::ROLE_ID_MANAGER], $journalId) ||
+            $isAuthorized = $user->hasRole([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR], $journalId) ||
                             $user->hasRole([Role::ROLE_ID_SITE_ADMIN], Application::SITE_CONTEXT_ID);
         }
         if (false === $isAuthorized) {
