@@ -22,6 +22,7 @@ use PKP\db\DAO;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLForm;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLMigration;
 use APP\plugins\generic\wosReviewerLocator\classes\wosRLDAO;
+use PKP\security\Role;
 
 class WosReviewerLocatorPlugin extends GenericPlugin {
 
@@ -144,8 +145,20 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
     function handleTemplateDisplay($hookName, $args): bool
     {
         $request = Application::get()->getRequest();
-        $journalId = $request->getContext()->getId();
-        $api_key = $this->getSetting($journalId, 'api_key');
+        $user = $request->getUser();
+        $context = $request->getContext();
+        $journalId = $context ? $context->getId() : null;
+
+        $isAuthorized = false;
+        if ($user && $journalId) {
+            $isAuthorized = $user->hasRole([Role::ROLE_ID_MANAGER, Role::ROLE_ID_SUB_EDITOR], $journalId) ||
+                            $user->hasRole([Role::ROLE_ID_SITE_ADMIN], Application::SITE_CONTEXT_ID);
+        }
+        if (false === $isAuthorized) {
+            return false;
+        }
+
+        $api_key = $journalId ? $this->getSetting($journalId, 'api_key') : null;
         $templateManager = $args[0];
         $template = $args[1];
         $params = $request->getQueryArray();
@@ -175,6 +188,7 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
                 $submission = Repo::submission()->get((int)$submissionId);
                 $stageId = $submission ? $submission->getData('stageId') : null;
                 // Pass full configuration to JavaScript
+
                 $config = '
                     window.wosReviewerLocatorConfig = {
                         apiKey: ' . json_encode($api_key) . ',
@@ -206,4 +220,3 @@ class WosReviewerLocatorPlugin extends GenericPlugin {
 if (!PKP_STRICT_MODE) {
     class_alias('\APP\plugins\generic\wosReviewerLocator\WosReviewerLocatorPlugin', '\WosReviewerLocatorPlugin');
 }
-
